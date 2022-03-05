@@ -5,7 +5,6 @@ date: "`r Sys.Date()`"
 output: slidy_presentation
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
@@ -14,15 +13,13 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## The plan
 
-A short workshop covering reproducibility and data management; data reshaping and joining; and summarizing and manipulation.
-
-http://rpubs.com/bpbond/r-data-manipulation
+A short workshop covering reproducibility and data management; data filtering, reshaping, and joining; and summarizing.
 
 * Reproducible research and data management (~15 minutes)
-* Filtering and reshaping data (~45 minutes; the `gapminder` dataset)
+* Filtering and cleaning data
+* Reshaping data (~30 minutes; the `gapminder` dataset)
+* Joining datasets (~30 minutes)
 * Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
-
-Feedback: <a href="mailto:bondlamberty@pnnl">bondlamberty@pnnl.gov</a> or  [@BenBondLamberty](https://twitter.com/BenBondLamberty).
 
 ## Requirements
 
@@ -39,7 +36,7 @@ Note the first two constitute a [particular and popular dialect of R](http://tid
 
 # Reproducibility and data management
 
-## Reproducibility
+## Reproducibility...
 
 We are in the era of collaborative 'big data', but even if you work by yourself with 'little data' you have to have some skills to deal with those data.
 
@@ -47,15 +44,13 @@ We are in the era of collaborative 'big data', but even if you work by yourself 
 
 >Your most important collaborator is your future self. It’s important to make a workflow that you can use time and time again, and even pass on to others in such a way that you don’t have to be there to walk them through it. [Source](http://berkeleysciencereview.com/reproducible-collaborative-data-science/)
 
-
-## Reproducibility
+## ...is the future
 
 Even if you don't buy it, **prepare yourself for the future**. Funders, journals, governments, colleagues are all pushing for more reproducibility and openness. It's a slow but steady ratchet.
 
 NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans; data deposition; publication in open-access journals.
 
 Reproducibility generally means *scripts* tied to *open source software* with effective *data management* and *archiving*.
-
 
 ## You can't reproduce
 
@@ -70,21 +65,19 @@ Reproducibility generally means *scripts* tied to *open source software* with ef
 <img src="data-manipulation-images/tardis.jpg" width="400" />
 </div>
 
-
 ## Version control
 
 **Git** (and website **GitHub**) are the most popular version control tools for use with R, and many other languages:
 
 <div class='left' style='float:left;width:48%'>
-- version control
-- sharing code with collaborators in a *repository*
-- issue tracking
-- public or private
+- Version control
+- Sharing code with collaborators in a *repository*
+- Issue tracking
+- Public or private
 </div>
 <div class='right' style='float:right;width:48%'>
 <img src="data-manipulation-images/git_2x.png" width="300" />
 </div>
-
 
 ## Data management during analysis
 
@@ -93,8 +86,7 @@ Version control and scripts address two of the biggest problems with managing co
 * Tracking *changes over time*
 * Understanding/reproducing *analytical steps*.
 
-Ideally, _every_ step in your analysis is programmatic--done by a script--so it can be 'read': understood and reproduced later.
-
+**Ideally, _every_ step in your analysis is programmatic**. This means it is performed by a script, so it can be understood and reproduced in the future.
 
 ## Reproducibility is a process
 
@@ -106,13 +98,12 @@ Ideally, _every_ step in your analysis is programmatic--done by a script--so it 
 
 A great and practical guide: http://kbroman.org/steps2rr/
 
-
 ## Reproducible research example
 
 A typical project/paper directory for me, slightly idealized:
 ```
 1-download.R
-2-prepdata.R
+2-prep_data.R
 3-analyze_data.R
 4-manuscript_report.Rmd
 logs/
@@ -122,5 +113,18 @@ rawdata/
 
 This directory contains *scripts* that are backed up both *locally* and *remotely*. It is under *version control*, so it's easy to track changes over time.
 
-There's also [drake](https://github.com/ropensci/drake), but that's a topic for another day.
+There's also [targets](https://docs.ropensci.org/targets/), but that's a topic for another day.
 
+# The end
+
+## Thank you!
+
+**Feedback welcome.**
+
+* <a href="mailto:bondlamberty@pnnl">bondlamberty@pnnl.gov</a>
+* [@BenBondLamberty](https://twitter.com/BenBondLamberty)
+* https://github.com/bpbond/R-workshops/issues
+
+The _slides_ for this presentation are available here: https://rpubs.com/bpbond/874167
+
+The _repository_ with the R code that generated the slides is here: https://github.com/bpbond/R-workshops/
