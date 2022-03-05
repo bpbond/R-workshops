@@ -1,0 +1,126 @@
+---
+title: "Data manipulation using tidyverse R"
+author: "Ben Bond-Lamberty"
+date: "`r Sys.Date()`"
+output: slidy_presentation
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introduction
+
+## The plan
+
+A short workshop covering reproducibility and data management; data reshaping and joining; and summarizing and manipulation.
+
+http://rpubs.com/bpbond/r-data-manipulation
+
+* Reproducible research and data management (~15 minutes)
+* Filtering and reshaping data (~45 minutes; the `gapminder` dataset)
+* Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
+
+Feedback: <a href="mailto:bondlamberty@pnnl">bondlamberty@pnnl.gov</a> or  [@BenBondLamberty](https://twitter.com/BenBondLamberty).
+
+## Requirements
+
+This workshop assumes an intermediate knowledge of R.
+
+If you want to do the hands-on exercises (encouraged!), make sure up-to-date versions of the following packages are installed:
+
+* `dplyr`
+* `tidyr`
+* `gapminder`
+* `babynames`
+
+Note the first two constitute a [particular and popular dialect of R](http://tidyverse.org), but the principles we'll go over are broadly applicable. (I will point out base R equivalents as we go.)
+
+# Reproducibility and data management
+
+## Reproducibility
+
+We are in the era of collaborative 'big data', but even if you work by yourself with 'little data' you have to have some skills to deal with those data.
+
+**Most fundamentally, your results have to be reproducible.**
+
+>Your most important collaborator is your future self. It’s important to make a workflow that you can use time and time again, and even pass on to others in such a way that you don’t have to be there to walk them through it. [Source](http://berkeleysciencereview.com/reproducible-collaborative-data-science/)
+
+
+## Reproducibility
+
+Even if you don't buy it, **prepare yourself for the future**. Funders, journals, governments, colleagues are all pushing for more reproducibility and openness. It's a slow but steady ratchet.
+
+NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans; data deposition; publication in open-access journals.
+
+Reproducibility generally means *scripts* tied to *open source software* with effective *data management* and *archiving*.
+
+
+## You can't reproduce
+
+...what you've lost. What if you need access to a file as it existed 1, 10, or 100, or 1000 days ago?
+
+<div class='left' style='float:left;width:48%'>
+- Incremental backups (minimum)
+- Don't depend on yourself! Has to be _automatic_.
+- Version control. A *repository* holds files and tracks changes: what, by whom, why
+</div>
+<div class='right' style='float:right;width:48%'>
+<img src="data-manipulation-images/tardis.jpg" width="400" />
+</div>
+
+
+## Version control
+
+**Git** (and website **GitHub**) are the most popular version control tools for use with R, and many other languages:
+
+<div class='left' style='float:left;width:48%'>
+- version control
+- sharing code with collaborators in a *repository*
+- issue tracking
+- public or private
+</div>
+<div class='right' style='float:right;width:48%'>
+<img src="data-manipulation-images/git_2x.png" width="300" />
+</div>
+
+
+## Data management during analysis
+
+Version control and scripts address two of the biggest problems with managing code and data
+
+* Tracking *changes over time*
+* Understanding/reproducing *analytical steps*.
+
+Ideally, _every_ step in your analysis is programmatic--done by a script--so it can be 'read': understood and reproduced later.
+
+
+## Reproducibility is a process
+
+*Don't let the perfect be the enemy of the good.* Upgrade and improve your workflow and skills over time.
+
+>Organizing analyses so that they are reproducible is not easy. It requires diligence and a considerable investment of time: to learn new computational tools, and to organize and document analyses as you go.
+
+>But partially reproducible is better than not at all reproducible. Just try to make your next paper or project better organized than the last.
+
+A great and practical guide: http://kbroman.org/steps2rr/
+
+
+## Reproducible research example
+
+A typical project/paper directory for me, slightly idealized:
+```
+1-download.R
+2-prepdata.R
+3-analyze_data.R
+4-manuscript_report.Rmd
+logs/
+output/
+rawdata/
+```
+
+This directory contains *scripts* that are backed up both *locally* and *remotely*. It is under *version control*, so it's easy to track changes over time.
+
+There's also [drake](https://github.com/ropensci/drake), but that's a topic for another day.
+
