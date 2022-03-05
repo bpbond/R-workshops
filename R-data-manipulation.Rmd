@@ -16,23 +16,25 @@ knitr::opts_chunk$set(echo = FALSE)
 A short workshop covering reproducibility and data management; data filtering, reshaping, and joining; and summarizing.
 
 * Reproducible research and data management (~15 minutes)
-* Filtering and cleaning data
+* Filtering and cleaning data (~30 minutes)
 * Reshaping data (~30 minutes; the `gapminder` dataset)
 * Joining datasets (~30 minutes)
 * Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
 
 ## Requirements
 
-This workshop assumes an intermediate knowledge of R.
+**This workshop assumes a basic to intermediate knowledge of R.**
 
 If you want to do the hands-on exercises (encouraged!), make sure up-to-date versions of the following packages are installed:
 
-* `dplyr`
-* `tidyr`
-* `gapminder`
-* `babynames`
+- `dplyr` - fast, flexible tool for working with data frames
+- `tidyr` - reshaping and cleaning data
+- `ggplot2` - popular package for visualizing data
+- `gapminder` - life expectancy, GDP per capita, and population for 142 countries
+- `babynames` - names provided to the SSA 1880-2017
 
-Note the first two constitute a [particular and popular dialect of R](http://tidyverse.org), but the principles we'll go over are broadly applicable. (I will point out base R equivalents as we go.)
+The first two constitute a [particular and popular dialect of R](http://tidyverse.org), but the principles we'll go over are broadly applicable. (I will point out base R equivalents as we go.)
+
 
 # Reproducibility and data management
 
@@ -46,11 +48,19 @@ We are in the era of collaborative 'big data', but even if you work by yourself 
 
 ## ...is the future
 
+<div class='left' style='float:left;width:48%'>
 Even if you don't buy it, **prepare yourself for the future**. Funders, journals, governments, colleagues are all pushing for more reproducibility and openness. It's a slow but steady ratchet.
 
-NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans; data deposition; publication in open-access journals.
+NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans; data deposition; and publication in open-access journals.
 
 Reproducibility generally means *scripts* tied to *open source software* with effective *data management* and *archiving*.
+</div>
+<div class='right' style='float:right;width:48%'>
+<img src="data-manipulation-images/Ratchet_example.gif" width="400" />
+
+ <font size="2"> By ZabMilenko at English Wikipedia, CC BY 3.0, https://commons.wikimedia.org/w/index.php?curid=49717967</font> 
+
+</div>
 
 ## You can't reproduce
 
@@ -67,13 +77,13 @@ Reproducibility generally means *scripts* tied to *open source software* with ef
 
 ## Version control
 
-**Git** (and website **GitHub**) are the most popular version control tools for use with R, and many other languages:
+**Git** (and website **GitHub**) are the most popular version control tools for use with R, and many other languages. They offer:
 
 <div class='left' style='float:left;width:48%'>
 - Version control
-- Sharing code with collaborators in a *repository*
+- Sharing work with collaborators in a *repository*
 - Issue tracking
-- Public or private
+- Public or private code
 </div>
 <div class='right' style='float:right;width:48%'>
 <img src="data-manipulation-images/git_2x.png" width="300" />
@@ -81,16 +91,21 @@ Reproducibility generally means *scripts* tied to *open source software* with ef
 
 ## Data management during analysis
 
-Version control and scripts address two of the biggest problems with managing code and data
+Version control and scripts address two of the biggest problems with 
+managing code and data:
 
 * Tracking *changes over time*
 * Understanding/reproducing *analytical steps*.
 
-**Ideally, _every_ step in your analysis is programmatic**. This means it is performed by a script, so it can be understood and reproduced in the future.
+**Ideally, _every_ step in your analysis is programmatic**. 
+
+This means it is performed by a script, so it can be understood and reproduced in the future.
 
 ## Reproducibility is a process
 
-*Don't let the perfect be the enemy of the good.* Upgrade and improve your workflow and skills over time.
+*Don't let the perfect be the enemy of the good.* 
+
+Upgrade and improve your workflow and skills over time:
 
 >Organizing analyses so that they are reproducible is not easy. It requires diligence and a considerable investment of time: to learn new computational tools, and to organize and document analyses as you go.
 
@@ -113,7 +128,10 @@ rawdata/
 
 This directory contains *scripts* that are backed up both *locally* and *remotely*. It is under *version control*, so it's easy to track changes over time.
 
-There's also [targets](https://docs.ropensci.org/targets/), but that's a topic for another day.
+There's also [targets](https://docs.ropensci.org/targets/), i.e. fully automated analysis workflows...but that's a topic for another day.
+
+
+
 
 # The end
 
