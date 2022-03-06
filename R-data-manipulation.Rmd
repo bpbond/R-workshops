@@ -6,19 +6,21 @@ output: slidy_presentation
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+theme_set(theme_bw())
 ```
 
-# Introduction
+# Introduction {.bigger}
 
 ## The plan
 
 A short workshop covering reproducibility and data management; data filtering, reshaping, and joining; and summarizing.
 
 * Reproducible research and data management (~15 minutes)
-* Filtering and cleaning data (~30 minutes)
-* Reshaping data (~30 minutes; the `gapminder` dataset)
-* Joining datasets (~30 minutes)
+* Filtering and cleaning data (~30 minutes; the `gapminder` dataset)
+* Reshaping and joining data (~30 minutes)
 * Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
 
 ## Requirements
@@ -36,15 +38,25 @@ If you want to do the hands-on exercises (encouraged!), make sure up-to-date ver
 The first two constitute a [particular and popular dialect of R](http://tidyverse.org), but the principles we'll go over are broadly applicable. (I will point out base R equivalents as we go.)
 
 
-# Reproducibility and data management
+# Reproducibility and data management {.bigger}
 
 ## Reproducibility...
 
 We are in the era of collaborative 'big data', but even if you work by yourself with 'little data' you have to have some skills to deal with those data.
 
+
+
+<div class='left' style='float:left;width:48%'>
 **Most fundamentally, your results have to be reproducible.**
 
 >Your most important collaborator is your future self. It’s important to make a workflow that you can use time and time again, and even pass on to others in such a way that you don’t have to be there to walk them through it. [Source](http://berkeleysciencereview.com/reproducible-collaborative-data-science/)
+</div>
+<div class='right' style='float:right;width:48%'>
+<img src="data-manipulation-images/future_self.png" width="250" />
+
+ <font size="2"> https://xkcd.com/1421/</font> 
+
+</div>
 
 ## ...is the future
 
@@ -77,7 +89,7 @@ Reproducibility generally means *scripts* tied to *open source software* with ef
 
 ## Version control
 
-**Git** (and website **GitHub**) are the most popular version control tools for use with R, and many other languages. They offer:
+**Git** (and website [GitHub](https://github.com)) are the most popular version control tools for use with R, and many other languages. They offer:
 
 <div class='left' style='float:left;width:48%'>
 - Version control
@@ -87,9 +99,12 @@ Reproducibility generally means *scripts* tied to *open source software* with ef
 </div>
 <div class='right' style='float:right;width:48%'>
 <img src="data-manipulation-images/git_2x.png" width="300" />
+
+ <font size="2"> https://xkcd.com/1597/ </font> 
+
 </div>
 
-## Data management during analysis
+## Scripts for data analysis
 
 Version control and scripts address two of the biggest problems with 
 managing code and data:
@@ -131,7 +146,173 @@ This directory contains *scripts* that are backed up both *locally* and *remotel
 There's also [targets](https://docs.ropensci.org/targets/), i.e. fully automated analysis workflows...but that's a topic for another day.
 
 
+# Filtering and cleaning data {.bigger}
 
+## gapminder
+
+In honor of the late [Hans Rosling](https://en.wikipedia.org/wiki/Hans_Rosling), we'll use the `gapminder` dataset today.
+
+```{r, message=FALSE}
+library(dplyr)
+library(gapminder)
+gapminder
+```
+
+Read the help page about `gapminder`.
+
+## Pipes and pipelines
+
+The `magrittr` package (used by both `dplyr` and `tidyr`) provides the `%>%` operator, which allows us to _pipe_ an object forward into a function or call expression.
+
+Note that `x %>% f` is _usually_ equivalent to `f(x)`.
+
+```{r, eval=FALSE}
+print(gapminder)
+gapminder %>% print()
+gagminder %>% head()
+gapminder %>% head(n=20)
+gapminder %>%
+  print() %>%
+  summary()    # what is non-piped equivalent?
+summary(print(gapminder))
+```
+
+RStudio has a [keyboard shortcut](https://support.rstudio.com/hc/en-us/articles/200711853-Keyboard-Shortcuts-in-the-RStudio-IDE) for this.
+
+R now (as of v4.1) has its own built-in pipe operator: `|>`.
+
+## dplyr
+
+The `dplyr` package uses _verbs_ (functions) to operate on _tibbles_ (data frames).
+When using pipes, this looks like:
+
+```{r, eval=FALSE}
+some_data_frame %>%
+
+  do_something() %>%
+
+  do_something_else() %>%
+
+  getting_dizzy_from_so_much_doing()
+```
+
+Let's go over some of those possible `do_something` steps.
+
+## Filter
+
+Very commonly used, as it lets you _filter_ a dataset by one or more conditions.
+
+```{r, eval=FALSE}
+gapminder %>% filter(country == "Egypt")
+gapminder %>% filter(country == "Egypt", year > 2000) # AND
+gapminder %>% filter(country == "Egypt" | year > 2000) # OR
+gapminder %>% 
+    filter(country %in% c("Egypt", "New Zealand", "Chad"))
+```
+
+This is equivalent to base R's `subset` function.
+
+## Filter
+
+```{r}
+library(ggplot2)
+gapminder %>%
+  filter(year == 1997) %>%
+  ggplot(aes(gdpPercap, lifeExp, size = pop, color = continent)) +
+  geom_point() +
+  scale_x_log10()
+```
+
+## Select
+
+Also extremely useful. Note the different notations for selecting columns:
+
+```{r, eval=FALSE}
+select(gapminder, pop, year)
+gapminder %>% select(pop, year)
+# Base R equivalent: gapminder[c("pop", "year")]
+gapminder %>% select(-lifeExp, -gdpPercap)
+gapminder %>% select(-1)
+```
+
+There are lots of other cool ways to select columns--see `?select`.
+
+```{r}
+gapminder %>% select(starts_with("c"))
+```
+
+## <span style="color: red;">Exercise: filtering and selecting</span>
+
+Let's focus on a single country's data for a bit. Write a pipeline that picks 
+out Egypt data only, removes the continent and country columns, and assigns 
+the result to a variable `Egypt`. How many rows does the resulting dataset have?
+
+## <span style="color: red;">Exercise: filtering and selecting</span>
+
+Let's focus on a single country's data for a bit. Write a pipeline that picks 
+out Egypt data only, removes the continent and country columns, and assigns 
+the result to a variable `Egypt`. How many rows does the resulting dataset have?
+
+```{r}
+gapminder %>%
+  filter(country == "Egypt") %>%
+  select(-continent, -country) ->
+  Egypt
+```
+
+```{r, echo=FALSE}
+Egypt
+```
+
+## Uniting and separating
+
+These functions can be very useful.
+
+```{r}
+library(tidyr)
+gapminder %>% unite(coco, country, continent)
+gapminder %>%
+  unite(coco, country, continent) %>%
+  separate(coco,
+           into = c("country", "continent"),
+           sep = "_")
+```
+
+## Mutating and renaming
+
+The `mutate` function in particular is used a _lot_ in `dplyr` pipelines.
+
+```{r}
+Egypt %>%
+    mutate(logpop = log(pop)) %>% 
+    rename(population = pop)
+
+# base R:
+# gapminder$logpop <- log(pop)
+# colnames(gapminder)[colnames(gapminder) == "pop"] <- "population"
+```
+
+## Data cleaning
+
+Two handy `tidyr` functions allow you to fill data downward, and fill
+in `NA` values.
+
+```{r}
+df <- tibble(who = c("Alice", "Bob", "Carol"), ages = c(25, NA, 45))
+df %>% fill(ages, .direction = "down")
+df %>% replace_na(list(ages = 99))
+```
+
+
+# Reshaping and joining data {.bigger}
+
+## 'Pivoting' data
+
+Dum dee dum.
+
+## Joins
+
+Joins
 
 # The end
 
