@@ -240,8 +240,9 @@ gapminder %>% select(-1)
 
 There are lots of other cool ways to select columns--see `?select`.
 
-```{r}
+```{r, eval=FALSE}
 gapminder %>% select(starts_with("c"))
+gapminder %>% select(where(is.numeric))
 ```
 
 ## <span style="color: red;">Exercise: filtering and selecting</span>
@@ -478,6 +479,271 @@ people %>% anti_join(hometowns, by = "who")
 ```
 
 
+# Summarizing data {.bigger}
+
+## Summarizing and manipulating data
+
+Thinking back to the typical data pipeline, we often want to summarize data by groups as an intermediate or final step. For example, for each subgroup we might want to:
+
+* Compute mean, max, min, etc. (`n`->1)
+* Compute rolling mean and other window functions (`n`->`n`)
+* Fit models and extract their parameters, goodness of fit, etc.
+
+Specific examples:
+
+* `gapminder`: what's the year of maximum GDP for each country?
+* `babynames`: what's the most common name over time?
+
+## Split-apply-combine
+
+These are generally known as *split-apply-combine* problems.
+
+<img src="data-manipulation-images/split_apply_combine.png" width="600" />
+
+ <font size="2"> https://github.com/ramnathv/rblocks/issues/8</font> 
+
+## Why we're focusing on dplyr
+
+<div class='left' style='float:left;width:48%'>
+The `dplyr` package specializes in data frames, but also allows you 
+to work with remote, out-of-memory databases, using exactly the same tools, 
+because it abstracts away *how* your data is stored.
+
+`dplyr` is very fast for most, though not all, operations on _data frames_ (tabular data).
+</div>
+<div class='right' style='float:right;width:48%'>
+<img src="data-manipulation-images/dplyr_logo.png" width="300" />
+
+ <font size="2"> https://github.com/tidyverse/dplyr </font> 
+
+</div>
+
+## Why use dplyr?
+
+Why use `dplyr`?
+
+* Clean, concise, and consistent syntax
+* High performance in most cases
+* Same code can work with data frames or remote databases
+* Very popular; lots of help/documentation
+
+Why not?
+
+* Need for long-term stability
+* Programming can be trickier in some circumstances
+* Not as fast in certain cases
+
+**The `data.table` package** is also worth checking out for its speed and zero dependencies.
+
+## Verbs
+
+`dplyr` provides functions for each basic *verb* of data manipulation. 
+These tend to have analogues in base R, but the `dplyr` functions use a
+consistent syntax and are high performance.
+
+* `filter()` - filter rows; like `subset()`
+* `arrange()` - reorder rows; like `order()`
+* `select()` - select (or drop) columns
+* `mutate()` - add new columns
+* `summarise()` - like base R's `aggregate()`
+
+## Grouping
+
+`dplyr` verbs become particularly powerful when used in conjunction 
+with *groups* we define in the dataset. Grouping doesn't change the data, 
+but instead _groups_ it in preparation for the next operation we perform.
+
+```{r}
+gapminder %>%
+  group_by(country)
+```
+
+## Summarising
+
+```{r}
+gapminder %>%
+  group_by(country) %>%
+  summarise(maxpop = max(pop))
+```
+
+## Summarising
+
+```{r}
+gapminder %>%
+  group_by(continent) %>%
+  summarise(meanLifeExp = mean(lifeExp),
+            maxpop = max(pop))
+```
+
+## Operating on multiple columns and/or functions
+
+We can apply a function to multiple columns...
+
+```{r}
+gapminder %>%
+  group_by(country) %>%
+  summarise(across(lifeExp:gdpPercap, max))
+```
+
+...or multiple functions to one or more columns:
+
+```{r}
+gapminder %>%
+  group_by(country) %>%
+  summarise(across(pop, c(min, max)))
+```
+
+## More complex summaries
+
+We now have the tools to build up a long pipeline to, e.g., 
+compute the min and max for all numeric variables and produce
+a table with continent as columns headers,
+and variable (gdpPercap, lifeExp, pop) and statistic as rows.
+
+```{r,}
+# We define this function to end up with nice column names
+min_max <- list(
+  min = ~min(.x, na.rm = TRUE), 
+  max = ~max(.x, na.rm = TRUE)
+)
+
+gapminder %>% 
+    filter(continent %in% c("Africa", "Americas", "Asia")) %>% 
+    group_by(continent) %>% 
+    summarise(across(where(is.numeric), min_max)) %>% 
+    pivot_longer(-continent) %>% 
+    separate(name, into = c("variable", "stat")) %>%
+    pivot_wider(names_from = "continent", values_from = "value")
+```
+
+## Introducing `babynames`
+
+Explore `babynames` a bit. How many rows, columns does it have? How many unique names?
+
+```{r}
+library(babynames)
+babynames
+```
+
+## Summarizing babynames
+
+What does this calculate?
+
+```{r, message=FALSE}
+babynames %>%
+  group_by(year, sex) %>%
+  summarise(prop = max(prop),
+            name = name[which.max(prop)])
+```
+
+`dplyr` now provides a function to do this operation in one line:`
+
+```{r, eval=FALSE}
+babynames %>%
+    group_by(year, sex) %>%
+    slice_max(prop)
+```
+
+## Summarizing babynames
+
+```{r, echo=FALSE}
+library(ggrepel)
+babynames %>%
+    group_by(year, sex) %>%
+    slice_max(prop) %>% 
+    ungroup() %>% 
+    arrange(sex, year) %>% 
+    mutate(change = c(TRUE, name[-1] != head(name, -1)),
+           name2 = if_else(change, name, "")) %>% 
+    ggplot(aes(year, prop, color = name, label = name2)) + 
+    geom_point() + 
+    geom_text_repel(nudge_y = 0.01) + 
+    facet_grid(sex~.) + 
+    guides(colour = "none")
+```
+
+https://en.wikipedia.org/wiki/Linda_(1946_song)
+
+## <span style="color: red;">Exercise: the `babynames` dataset</span>
+
+Load the dataset using `library(babynames)`.
+
+Read its help page. Look at its structure (rows, columns, summary).
+
+Use `dplyr` to calculate the total number of names in the SSA database for each 
+year and sex, with each sex's counts in a separate column. Hint: `n()`.
+
+Make a graph or table showing how popular YOUR name has been over time (either 
+its proportion, or rank).
+
+## <span style="color: red;">Exercise: the `babynames` dataset</span>
+
+Load the dataset using `library(babynames)`.
+
+Read its help page. Look at its structure (rows, columns, summary).
+
+Use `dplyr` to calculate the total number of names in the SSA database for each 
+year and sex, with each sex's counts in a separate column. Hint: `n()`.
+
+Make a graph or table showing how popular YOUR name has been over time (either 
+its proportion, or rank).
+
+```{r, eval=FALSE}
+babynames %>% 
+    group_by(year, sex) %>% 
+    summarise(n = n()) %>% 
+    pivot_wider(names_from = "sex", values_from = "n")
+
+babynames %>%
+    filter(name == "Benjamin") %>%
+    ggplot(aes(year, n, color = sex)) +
+    geom_point() +
+    ggtitle("Benjamin")
+```
+
+## Another example: ranking
+
+```{r}
+babynames %>%
+    group_by(year, sex) %>%
+    mutate(rank = row_number(desc(n))) %>%
+    filter(name %in% c("Benjamin", "Rachel")) %>%
+    ggplot(aes(year, rank, color = name, shape = sex)) +
+    geom_point() + scale_y_log10() 
+    ggtitle("Benjamin and Rachel")
+```
+
+## Model-fitting
+
+The `diamonds` dataset is included with `ggplot2`.
+
+```{r, message=FALSE}
+ggplot(diamonds, aes(carat, price, color = cut)) + 
+    geom_point() + 
+    geom_smooth(method = "lm") +
+    scale_x_log10() + scale_y_log10()
+```
+
+## Model-fitting
+
+```{r}
+library(broom) # to sweep up -- tidy -- model outputs
+diamonds %>% 
+    group_by(cut) %>% 
+    do(mod = lm(log(price) ~ log(carat), data = .)) %>% 
+    summarise(cut = cut,
+              tidy(mod))
+```
+
+## Important things we didn't talk about
+
+- Getting your data _into_ R
+- Working with non-text/tabular data
+- Lists
+- Handling dates and timestamps
+- Plotting (though we had many examples)
+
+But the tools we've covered here can do a lot!
 
 # The end
 
