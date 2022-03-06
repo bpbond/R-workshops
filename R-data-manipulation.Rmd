@@ -314,7 +314,6 @@ people %>% replace_na(list(age = 99))
 Let's start with the simple `people` data frame, but with a couple more columns:
 
 ```{r}
-#people$hometown <- c("Abilene", "Billsville", "Cleveland")
 people$height <- c(160, 170, 180)
 people
 ```
@@ -334,6 +333,8 @@ what's the data source, and what column(s) do we want to pivot?
 ```{r}
 people %>% pivot_longer(c("age", "height"))
 ```
+
+(Note base R has a `reshape` function, but I find it difficult to use.)
 
 ## Make data longer
 
@@ -405,7 +406,7 @@ Egypt %>% pivot_longer(-lifeExp)
 
 Our `Egypt` dataset has one row per year, and three data columns. Write code
 to transform it to have one row per datum, and each year in a
-different column. Do this for the 21st-century data only.
+different column. Do this for post-2000 data only.
 
 Hint: start by filtering and then pivoting it into _long_ form.
 
@@ -413,7 +414,7 @@ Hint: start by filtering and then pivoting it into _long_ form.
 
 Our `Egypt` dataset has one row per year, and three data columns. Write code
 to transform it to have one row per datum, and each year in a
-different column. Do this for the 21st-century data only.
+different column. Do this for post-2000 data only.
 
 Hint: start by filtering and then pivoting it into _long_ form.
 
@@ -426,7 +427,57 @@ Egypt %>%
 
 ## Joins
 
-Joins
+Frequently we have more than one data source:
+
+```{r}
+people
+hometowns <- tibble(who = c("Alice", "Bob", "Dave"),
+                    where = c("Abilene", "Billsville", "Darien"))
+hometowns
+```
+
+Here, we'd like to `merge` (the base R function) or _join_ these together.
+
+## Left joins
+
+Probably the most commonly used join is `left_join`.
+This works by including all rows in the _first_ data frame, and any
+matches it finds from the _second_:
+
+```{r}
+people %>% left_join(hometowns)
+```
+
+In other words, it's a _lookup_.
+
+Note the message. **It's good practice to specify the common columns** 
+that joins should use:
+
+```{r, eval=FALSE}
+people %>% left_join(hometowns, by = "who")
+```
+
+## Left joins
+
+The order matters. Why do these produce different results?
+
+```{r}
+people %>% left_join(hometowns, by = "who")
+hometowns %>% left_join(people, by = "who")
+```
+
+## Other joins
+
+There are many different join operations available.
+
+```{r}
+people %>% right_join(hometowns, by = "who")
+people %>% inner_join(hometowns, by = "who")
+people %>% full_join(hometowns, by = "who")
+people %>% anti_join(hometowns, by = "who")
+```
+
+
 
 # The end
 
