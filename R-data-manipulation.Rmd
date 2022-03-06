@@ -152,7 +152,7 @@ There's also [targets](https://docs.ropensci.org/targets/), i.e. fully automated
 
 ## gapminder
 
-In honor of the late [Hans Rosling](https://en.wikipedia.org/wiki/Hans_Rosling), we'll use the `gapminder` dataset today.
+In honor of the late [Hans Rosling](https://en.wikipedia.org/wiki/Hans_Rosling), we'll use the `gapminder` dataset.
 
 ```{r, message=FALSE}
 library(gapminder)
@@ -298,8 +298,8 @@ Egypt %>%
 
 ## Data cleaning
 
-Two handy `tidyr` functions allow you to fill data downward, and fill
-in `NA` values.
+Two handy `tidyr` functions allow you to fill data based on adjacent values, 
+and fill in `NA` values.
 
 ```{r}
 people <- tibble(who = c("Alice", "Bob", "Carol"), age = c(25, NA, 45))
@@ -652,6 +652,8 @@ babynames %>%
     group_by(year, sex) %>%
     slice_max(prop) %>% 
     ungroup() %>% 
+    # the one tricky bit follows: for each sex x year group, we want the 
+    # first name to be plotted, but the following ones
     arrange(sex, year) %>% 
     mutate(change = c(TRUE, name[-1] != head(name, -1)),
            name2 = if_else(change, name, "")) %>% 
@@ -742,12 +744,16 @@ diamonds %>%
 - Lists
 - Handling dates and timestamps
 - Plotting (though we had many examples)
+- High performance computing
 
 But the tools we've covered here can do a lot!
 
 # The end
 
 ## Thank you!
+
+
+<div class='left' style='float:left;width:48%'>
 
 **Feedback welcome.**
 
@@ -758,3 +764,10 @@ But the tools we've covered here can do a lot!
 The _slides_ for this presentation are available here: https://rpubs.com/bpbond/874167
 
 The _repository_ with the R code that generated the slides is here: https://github.com/bpbond/R-workshops/
+</div>
+<div class='right' style='float:right;width:48%'>
+<img src="data-manipulation-images/talk-like-a-pirate.gif" width="400" />
+
+ <font size="2"> Source?</font> 
+
+</div>
