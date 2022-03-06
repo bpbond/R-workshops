@@ -8,6 +8,8 @@ output: slidy_presentation
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(dplyr)
+
 library(ggplot2)
 theme_set(theme_bw())
 ```
@@ -153,7 +155,6 @@ There's also [targets](https://docs.ropensci.org/targets/), i.e. fully automated
 In honor of the late [Hans Rosling](https://en.wikipedia.org/wiki/Hans_Rosling), we'll use the `gapminder` dataset today.
 
 ```{r, message=FALSE}
-library(dplyr)
 library(gapminder)
 gapminder
 ```
@@ -168,6 +169,8 @@ Note that `x %>% f` is _usually_ equivalent to `f(x)`.
 
 ```{r, eval=FALSE}
 print(gapminder)
+
+library(dplyr)
 gapminder %>% print()
 gagminder %>% head()
 gapminder %>% head(n=20)
@@ -298,17 +301,128 @@ Two handy `tidyr` functions allow you to fill data downward, and fill
 in `NA` values.
 
 ```{r}
-df <- tibble(who = c("Alice", "Bob", "Carol"), ages = c(25, NA, 45))
-df %>% fill(ages, .direction = "down")
-df %>% replace_na(list(ages = 99))
+people <- tibble(who = c("Alice", "Bob", "Carol"), age = c(25, NA, 45))
+people %>% fill(age, .direction = "down")
+people %>% replace_na(list(age = 99))
 ```
 
 
 # Reshaping and joining data {.bigger}
 
-## 'Pivoting' data
+## Reshaping ("pivoting") data
 
-Dum dee dum.
+Let's start with the simple `people` data frame, but with a couple more columns:
+
+```{r}
+#people$hometown <- c("Abilene", "Billsville", "Cleveland")
+people$height <- c(160, 170, 180)
+people
+```
+
+Note that there is one column of _metadata_ (name) and two of _data_ 
+(age and height).
+
+## Make data longer
+
+Let's say we want to put `people` into long (or _tidy_) format--where every row
+is a different observation. In other words, we need to collapse multiple
+columns of data into a single one.
+
+For this we use `tidyr::pivot_longer()`, which at a minimum needs to know: 
+what's the data source, and what column(s) do we want to pivot?
+
+```{r}
+people %>% pivot_longer(c("age", "height"))
+```
+
+## Make data longer
+
+We could also say "pivot everything except for the 'who' column", or provide
+custom column names in the resulting data frame:
+
+```{r}
+people %>% pivot_longer(-who)
+people %>% pivot_longer(-who, names_to = "variable", values_to = "datum")
+```
+
+## Make data wider
+
+To transform data into a wider form, `pivot_wider` needs to know at least
+two things: which column holds the new column names, and which the data.
+
+```{r}
+people %>% 
+    pivot_longer(-who) %>%
+    pivot_wider(names_from = "name")
+```
+
+Here `tidyr` has guessed that if the names of the new columns are coming from
+"name", then the values are probably coming from the numeric column "value".
+
+And so we get our original `people` data frame back.
+
+What happens if we take column names from the "who" column?
+
+## Make data wider
+
+Pivoting data wider may result in `NA` values if not every combination
+row-column combination is present in the dataset:
+
+```{r}
+people %>% 
+    pivot_wider(names_from = "who", values_from = "age")
+people %>% 
+    pivot_wider(names_from = "who", values_from = "age", values_fill = -1)
+```
+
+## Reshaping gapminder data
+
+Time for something a bit more complex. Back to our gapminder-derived `Egypt`
+dataset!
+
+```{r}
+Egypt %>% 
+    pivot_longer(c(lifeExp, pop, gdpPercap))
+```
+
+## Reshaping gapminder data
+
+```{r}
+Egypt %>%
+  pivot_longer(-year) %>%
+  ggplot(aes(year, value)) + geom_line() +
+   facet_wrap(~name, scales = "free")
+```
+
+Experiment. Why do these do what they do?
+
+```{r, eval=FALSE}
+Egypt %>% pivot_longer(lifeExp)
+Egypt %>% pivot_longer(-lifeExp)
+```
+
+## <span style="color: red;">Exercise: reshaping</span>
+
+Our `Egypt` dataset has one row per year, and three data columns. Write code
+to transform it to have one row per datum, and each year in a
+different column. Do this for the 21st-century data only.
+
+Hint: start by filtering and then pivoting it into _long_ form.
+
+## <span style="color: red;">Exercise: reshaping</span>
+
+Our `Egypt` dataset has one row per year, and three data columns. Write code
+to transform it to have one row per datum, and each year in a
+different column. Do this for the 21st-century data only.
+
+Hint: start by filtering and then pivoting it into _long_ form.
+
+```{r}
+Egypt %>% 
+    filter(year > 2000) %>% 
+    pivot_longer(-year) %>% 
+    pivot_wider(names_from = "year")
+```
 
 ## Joins
 
