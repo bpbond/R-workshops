@@ -311,8 +311,8 @@ Egypt %>%
 
 Several important principles:
 
-1. You can have multiple assignments within a single `mutate()`
-2. Doing so is more efficient than separate `mutate()` calls
+1. You can have multiple assignments within a single `mutate`
+2. Doing so is more efficient than separate `mutate` calls
 3. Changes occur immediately
 
 ```{r, eval=FALSE}
@@ -322,7 +322,7 @@ gapminder %>%
            pop_sd = sd(pop))
 ```
 
-4. There's also `transmute()`, which adds new variables and drops existing ones.
+4. There's also `transmute`, which adds new variables and drops existing ones.
 
 ## Data cleaning
 
@@ -356,7 +356,7 @@ Let's say we want to put `people` into long (or _tidy_) format--where every row
 is a different observation. In other words, we need to collapse multiple
 columns of data into a single one.
 
-For this we use `tidyr::pivot_longer()`, which at a minimum needs to know: 
+For this we use `tidyr::pivot_longer`, which at a minimum needs to know: 
 what's the data source, and what column(s) do we want to pivot?
 
 ```{r}
@@ -569,11 +569,11 @@ Why not?
 These tend to have analogues in base R, but the `dplyr` functions use a
 consistent syntax and are high performance.
 
-* `filter()` - filter rows; like `subset()`
-* `arrange()` - reorder rows; like `order()`
-* `select()` - select (or drop) columns
-* `mutate()` - add new columns
-* `summarise()` - like base R's `aggregate()`
+* `filter` - filter rows; like `subset`
+* `arrange` - reorder rows; like `order`
+* `select` - select (or drop) columns
+* `mutate` - add new columns
+* `summarise` - like base R's `aggregate`
 
 ## Grouping
 
