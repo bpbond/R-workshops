@@ -121,11 +121,11 @@ Version control and scripts address two of the biggest problems with
 managing code and data:
 
 * Tracking *changes over time*
-* Understanding/reproducing *analytical steps*.
+* Understanding and reproducing the *analytical steps*.
 
 **Ideally, _every_ step in your analysis is programmatic**. 
 
-This means it is performed by a script, so it can be understood and reproduced in the future.
+This means it is performed by a script that can be read and understood in the future.
 
 ## Reproducibility is a process
 
@@ -309,11 +309,11 @@ Egypt %>%
 
 ## Mutating
 
-Several important principles:
+Several important notes:
 
 1. You can have multiple assignments within a single `mutate`
 2. Doing so is more efficient than separate `mutate` calls
-3. Changes occur immediately
+3. New variables overwrite existing variables of the same name
 
 ```{r, eval=FALSE}
 # This will not work correctly
@@ -322,7 +322,21 @@ gapminder %>%
            pop_sd = sd(pop))
 ```
 
-4. There's also `transmute`, which adds new variables and drops existing ones.
+4. Variables can be removed by setting their value to NULL
+5. There's also `transmute`, which adds new variables and drops existing ones
+
+## Mutating
+
+Several important notes:
+
+6. _Row-wise operations_ require special handling:
+
+```{r}
+df <- tibble(x = 1:2, y = 3:4, z = 5:6)
+df %>% mutate(m = mean(c(x, y, z)))
+df %>% rowwise() %>% mutate(m = mean(c(x, y, z)))
+```
+
 
 ## Data cleaning
 
@@ -340,7 +354,7 @@ people %>% replace_na(list(age = 99))
 
 ## Reshaping ("pivoting") data
 
-Let's start with the simple `people` data frame, but another column:
+Let's start with the simple `people` data frame, but adding another column:
 
 ```{r}
 people$height <- c(160, 170, 180)
@@ -513,8 +527,8 @@ people %>% anti_join(hometowns, by = "who")
 
 Thinking back to the typical data pipeline, we often want to summarize data by groups as an intermediate or final step. For example, for each subgroup we might want to:
 
-* Compute mean, max, min, etc. (`n`->1)
-* Compute rolling mean and other window functions (`n`->`n`)
+* Compute mean, max, min, etc. (`n` → 1)
+* Compute rolling mean and other window functions (`n` → `n`)
 * Fit models and extract their parameters, goodness of fit, etc.
 
 Specific examples:
@@ -569,11 +583,11 @@ Why not?
 These tend to have analogues in base R, but the `dplyr` functions use a
 consistent syntax and are high performance.
 
-* `filter` - filter rows; like `subset`
+* `filter` - filter rows; like base R's `subset`
 * `arrange` - reorder rows; like `order`
 * `select` - select (or drop) columns
 * `mutate` - add new columns
-* `summarise` - like base R's `aggregate`
+* `summarise` - like `aggregate`
 
 ## Grouping
 
