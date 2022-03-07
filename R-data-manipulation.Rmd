@@ -1,5 +1,5 @@
 ---
-title: "Data manipulation using tidyverse R"
+title: "Data manipulation and analysis using tidyverse R"
 author: "Ben Bond-Lamberty"
 date: "`r Sys.Date()`"
 output: slidy_presentation
@@ -29,7 +29,8 @@ A short workshop covering reproducibility and data management; data filtering, r
 
 **This workshop assumes a basic to intermediate knowledge of R.**
 
-If you want to do the hands-on exercises (encouraged!), make sure up-to-date versions of the following packages are installed:
+If you want to do the hands-on exercises (encouraged!), make sure up-to-date
+versions of the following packages are installed:
 
 - `dplyr` - fast, flexible tool for working with data frames
 - `tidyr` - reshaping and cleaning data
@@ -37,14 +38,17 @@ If you want to do the hands-on exercises (encouraged!), make sure up-to-date ver
 - `gapminder` - life expectancy, GDP per capita, and population for 142 countries
 - `babynames` - names provided to the SSA 1880-2017
 
-The first two constitute a [particular and popular dialect of R](http://tidyverse.org), but the principles we'll go over are broadly applicable. (I will point out base R equivalents as we go.)
+The first two constitute a [particular and popular dialect of R](http://tidyverse.org),
+but the principles we'll go over are broadly applicable. 
+(I will point out base R equivalents as we go.)
 
 
 # Reproducibility and data management {.bigger}
 
 ## Reproducibility...
 
-We are in the era of collaborative 'big data', but even if you work by yourself with 'little data' you have to have some skills to deal with those data.
+We are in the era of collaborative 'big data', but even if you work by yourself
+with 'little data' you have to have some skills to deal with those data.
 
 
 
@@ -63,11 +67,15 @@ We are in the era of collaborative 'big data', but even if you work by yourself 
 ## ...is the future
 
 <div class='left' style='float:left;width:48%'>
-Even if you don't buy it, **prepare yourself for the future**. Funders, journals, governments, colleagues are all pushing for more reproducibility and openness. It's a slow but steady ratchet.
+Even if you don't buy it, **prepare yourself for the future**. Funders, 
+journals, governments, colleagues are all pushing for more reproducibility and 
+openness. It's a slow but steady ratchet.
 
-NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans; data deposition; and publication in open-access journals.
+NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans;
+data deposition; and publication in open-access journals.
 
-Reproducibility generally means *scripts* tied to *open source software* with effective *data management* and *archiving*.
+Reproducibility generally means *scripts* tied to *open source software* with 
+effective *data management* and *archiving*.
 </div>
 <div class='right' style='float:right;width:48%'>
 <img src="data-manipulation-images/Ratchet_example.gif" width="400" />
@@ -91,7 +99,8 @@ Reproducibility generally means *scripts* tied to *open source software* with ef
 
 ## Version control
 
-**Git** (and website [GitHub](https://github.com)) are the most popular version control tools for use with R, and many other languages. They offer:
+**Git** (and website [GitHub](https://github.com)) are the most popular version
+control tools for use with R, and many other languages. They offer:
 
 <div class='left' style='float:left;width:48%'>
 - Version control
@@ -143,9 +152,11 @@ output/
 rawdata/
 ```
 
-This directory contains *scripts* that are backed up both *locally* and *remotely*. It is under *version control*, so it's easy to track changes over time.
+This directory contains *scripts* that are backed up both *locally* and *remotely*.
+It is under *version control*, so it's easy to track changes over time.
 
-There's also [targets](https://docs.ropensci.org/targets/), i.e. fully automated analysis workflows...but that's a topic for another day.
+There's also [targets](https://docs.ropensci.org/targets/), i.e. fully 
+automated analysis workflows...but that's a topic for another day.
 
 
 # Filtering and cleaning data {.bigger}
@@ -282,19 +293,36 @@ gapminder %>%
            sep = "_")
 ```
 
-## Mutating and renaming
+## Renaming and mutating
 
 The `mutate` function in particular is used a _lot_ in `dplyr` pipelines.
 
 ```{r}
 Egypt %>%
-    mutate(logpop = log(pop)) %>% 
-    rename(population = pop)
+    rename(population = pop) %>% 
+    mutate(logpop = log(population)) 
 
 # base R:
 # gapminder$logpop <- log(pop)
 # colnames(gapminder)[colnames(gapminder) == "pop"] <- "population"
 ```
+
+## Mutating
+
+Several important principles:
+
+1. You can have multiple assignments within a single `mutate()`
+2. Doing so is more efficient than separate `mutate()` calls
+3. Changes occur immediately
+
+```{r, eval=FALSE}
+# This will not work correctly
+gapminder %>% 
+    mutate(pop = mean(pop),
+           pop_sd = sd(pop))
+```
+
+4. There's also `transmute()`, which adds new variables and drops existing ones.
 
 ## Data cleaning
 
@@ -312,7 +340,7 @@ people %>% replace_na(list(age = 99))
 
 ## Reshaping ("pivoting") data
 
-Let's start with the simple `people` data frame, but with a couple more columns:
+Let's start with the simple `people` data frame, but another column:
 
 ```{r}
 people$height <- c(160, 170, 180)
@@ -752,7 +780,6 @@ But the tools we've covered here can do a lot!
 
 ## Thank you!
 
-
 <div class='left' style='float:left;width:48%'>
 
 **Feedback welcome.**
@@ -766,7 +793,7 @@ The _slides_ for this presentation are available here: https://rpubs.com/bpbond/
 The _repository_ with the R code that generated the slides is here: https://github.com/bpbond/R-workshops/
 </div>
 <div class='right' style='float:right;width:48%'>
-<img src="data-manipulation-images/talk-like-a-pirate.gif" width="400" />
+<img src="data-manipulation-images/talk-like-a-pirate.gif" width="450" />
 
  <font size="2"> Source?</font> 
 
