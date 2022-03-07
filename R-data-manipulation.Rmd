@@ -790,7 +790,7 @@ diamonds %>%
 
 But the tools we've covered here can do a lot!
 
-# The end
+# The end {.bigger}
 
 ## Thank you!
 
