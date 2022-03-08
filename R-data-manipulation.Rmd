@@ -617,6 +617,11 @@ gapminder %>%
             maxpop = max(pop))
 ```
 
+Notice that the only columns left, after summarising, are:
+
+* The grouping variable(s), and 
+* The summarised ones.
+
 ## Operating on multiple columns and/or functions
 
 We can apply a function to multiple columns...
