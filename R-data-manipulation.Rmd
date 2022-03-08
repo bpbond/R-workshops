@@ -337,6 +337,8 @@ df %>% mutate(m = mean(c(x, y, z)))
 df %>% rowwise() %>% mutate(m = mean(c(x, y, z)))
 ```
 
+**Note** that for a large dataset, base R's `rowMeans` function will be _much_ 
+faster than this, however. Use the best tool for the job!
 
 ## Data cleaning
 
