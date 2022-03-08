@@ -517,6 +517,8 @@ There are many different join operations available.
 people %>% right_join(hometowns, by = "who")
 people %>% inner_join(hometowns, by = "who")
 people %>% full_join(hometowns, by = "who")
+# anti_join returns all rows from x without a match in y;
+# semi_join returns all rows from x with a match
 people %>% anti_join(hometowns, by = "who")
 ```
 
@@ -575,7 +577,8 @@ Why not?
 * Programming can be trickier in some circumstances
 * Not as fast in certain cases
 
-**The `data.table` package** is also worth checking out for its speed and zero dependencies.
+**The `data.table` package** is very much worth checking out for its speed,
+stability, and zero dependencies.
 
 ## Verbs
 
@@ -601,6 +604,11 @@ gapminder %>%
 ```
 
 ## Summarising
+
+Most frequently, that "next operation" is a 
+
+* `summarise` (`n` → 1), or 
+* `mutate` (`n` → `n`):
 
 ```{r}
 gapminder %>%
@@ -704,6 +712,7 @@ babynames %>%
     arrange(sex, year) %>% 
     mutate(change = c(TRUE, name[-1] != head(name, -1)),
            name2 = if_else(change, name, "")) %>% 
+    # and now plot
     ggplot(aes(year, prop, color = name, label = name2)) + 
     geom_point() + 
     geom_text_repel(nudge_y = 0.01) + 
