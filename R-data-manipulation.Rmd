@@ -618,7 +618,7 @@ gapminder %>%
   summarise(maxpop = max(pop))
 ```
 
-## Summarising
+## Summarising and columns
 
 ```{r}
 gapminder %>%
@@ -631,6 +631,29 @@ Notice that the only columns left, after summarising, are:
 
 * The grouping variable(s), and 
 * The summarised ones.
+
+## Summarising and groups
+
+By default, every summary operation removes the _last_ grouping variable,
+while leaving the others intact:
+
+```{r}
+gapminder %>%
+  group_by(continent, country) %>%
+  summarise(max_LifeExp = max(lifeExp))
+```
+
+This makes it easy to do certain kinds of multi-step operations; for example,
+if we want to know what the _mean maximum country life expectancy_ is by continent:
+
+```{r}
+gapminder %>%
+  group_by(continent, country) %>%
+  summarise(max_LifeExp = max(lifeExp), .groups = "drop_last") %>% 
+  summarise(mean(max_LifeExp))
+```
+
+You can also re-group as needed--See the `.groups` argument--or `ungroup`.
 
 ## Operating on multiple columns and/or functions
 
@@ -710,7 +733,7 @@ babynames %>%
     slice_max(prop) %>% 
     ungroup() %>% 
     # the one tricky bit follows: for each sex x year group, we want the 
-    # first name to be plotted, but the following ones
+    # first name to be plotted, but not the following ones
     arrange(sex, year) %>% 
     mutate(change = c(TRUE, name[-1] != head(name, -1)),
            name2 = if_else(change, name, "")) %>% 
