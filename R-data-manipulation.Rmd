@@ -411,7 +411,7 @@ What happens if we take column names from the "who" column?
 
 ## Make data wider
 
-Pivoting data wider may result in `NA` values if not every combination
+Pivoting data wider may result in `NA` values if not every
 row-column combination is present in the dataset:
 
 ```{r}
