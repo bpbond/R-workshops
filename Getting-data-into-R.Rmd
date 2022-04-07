@@ -40,7 +40,27 @@ read.csv as a workhorse tool
 
 >A field or line is ‘blank’ if it contains nothing (except whitespace if no separator is specified) before a comment character or the end of the field or line.
 
+# read.csv
+
 Demonstrate it
+
+
+# Caution: file paths
+
+**Do not use absolute file paths.**
+
+>If the first line of your R script is
+>setwd("C:\Users\jenny\path\that\only\I\have")
+>I will come into your office and SET YOUR COMPUTER ON FIRE 🔥.
+
+https://www.tidyverse.org/blog/2017/12/workflow-vs-script/
+
+# Caution: Excel
+
+Microsoft Excel does _not_ handle CSVs well in some circumstances.
+It mucks with significant digits, and will mangle ("reformat") dates.
+
+**Use a dedicated CSV editor, not Excel, if at all possible.**
 
 
 # read.csv
@@ -55,7 +75,7 @@ read.table(file = file, header = header, sep = sep, quote = quote,
     dec = dec, fill = fill, comment.char = comment.char, ...)
 ```
 
-# read.csv: crucial parameters and capabilities
+# read.csv: crucial parameters
 
 * `skip`
 
@@ -63,26 +83,42 @@ read.table(file = file, header = header, sep = sep, quote = quote,
 cat(readLines("test-files/file-with-header.csv"), sep = "\n")
 ```
 
+```{r}
+read.csv("test-files/file-with-header.csv", skip = 1)
+```
+
+
+# read.csv: crucial parameters
+
 * `comment.char`
+
+```{r}
+read.csv("test-files/file-with-header.csv", comment.char = "#")
+```
+
+
+# read.csv: crucial parameters
+
 * `na.strings`
 
 ```{r, echo=FALSE}
 cat(readLines("test-files/missing-values.csv"), sep = "\n")
 ```
 
+```{r}
+read.csv("test-files/missing-values.csv")
+```
+
+```{r}
+read.csv("test-files/missing-values.csv", na.strings = "4")
+```
+
+
+# read.csv: crucial parameters
+
 * `check.names`
 * `colClasses`
-
-
-# A word about file paths
-
-DON'T USE ABSOLUTE PATHS
-
->If the first line of your R script is
->setwd("C:\Users\jenny\path\that\only\I\have")
->I will come into your office and SET YOUR COMPUTER ON FIRE 🔥.
-
-https://www.tidyverse.org/blog/2017/12/workflow-vs-script/
+* `fileEncoding`
 
 
 # readr::read_csv
@@ -93,15 +129,23 @@ Some advantages:
 * Handles dates and times better?
 * No `stringsAsFactors` (but read.csv behavior has changed with R 4)
 * Compact `col_types` parameter
+* No row names
 
 
-Fancier things
+# Fancier things: reading from online
 
-# Reading from online
+```{r}
+read.csv("https://raw.githubusercontent.com/bpbond/R-workshops/main/test-files/basic-file.csv")
+```
 
-# Reading from memory
 
-Reading from memory
+# Fancier things: reading from memory
+
+```{r}
+my_data <- c("A,B", "1,2", "3,4")
+read.csv(text = my_data)
+```
+
 
 # Skipping a units line
 
@@ -137,6 +181,12 @@ read.csv(text = x_raw[-2])
 
 # Skipping columns
 
+Set the appropriate `colClasses` to NULL.
+
+`read_csv` is easier here...
+
+
+# Other delimiters
 
 What if your data are tab-delimited (or something else)?
 
