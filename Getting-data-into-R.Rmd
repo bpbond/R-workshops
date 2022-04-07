@@ -1,0 +1,99 @@
+---
+title: "Getting data into R"
+author: "Ben Bond-Lamberty"
+date: "`r Sys.Date()`"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+
+library(ggplot2)
+theme_set(theme_bw())
+```
+
+# Introduction {.bigger}
+
+How do we get our data _into_ R?
+
+talking about tabular structured data today
+
+# Comma-separated value (CSV) files
+
+
+# read.csv
+
+read.csv as workhorse tool
+
+Crucial parameters and capabilities
+
+`skip`
+`comment.char`
+`na.strings`
+`check.names`
+`colClasses`
+
+reading
+
+DON'T USE ABSOLUTE PATHS
+
+
+
+
+readr::read_csv
+
+Some advantages
+* Produces a tibble
+* Automatically handles dates and times
+* No stringsAsFactors (but read.csv behavior has changed with R 4)
+* Compact `col_types` parameter
+
+
+Fancier things
+
+# Reading from online
+
+# Reading from memory
+
+Reading from memory
+
+# Skipping a units line
+
+This is fairly common and seems like a pain:
+
+```{r, echo=FALSE}
+cat(readLines("test-files/units-line.csv"), sep = "\n")
+```
+
+This forces every column to be read as `character`; we then need to remove
+the row and re-class each column. What a pain!
+
+```{r}
+x <- read.csv("test-files/units-line.csv")
+glimpse(x)
+x <- x[-1,]
+x$Y <- as.numeric(x$Y)
+x$Z <- as.numeric(x$Z)
+glimpse(x)
+```
+
+# Skipping a units line
+
+A slicker way is to read the file in as raw text; delete the problematic
+line(s), and the `read.csv` directly from memory:
+
+```{r}
+x_raw <- readLines("test-files/units-line.csv")
+print(x_raw)
+read.csv(text = x_raw[-2])
+```
+
+
+# Skipping columns
+
+
+What if your data are tab-delimited (or something else)?
+
+See `read.delim` and the more general `read.table`
