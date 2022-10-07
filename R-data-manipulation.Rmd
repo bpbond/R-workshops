@@ -18,12 +18,14 @@ theme_set(theme_bw())
 
 ## The plan
 
-A short workshop covering reproducibility and data management; data filtering, reshaping, and joining; and summarizing.
+A short workshop covering reproducibility and code/data management; data filtering, reshaping, and joining; and summarizing.
 
 * Reproducible research and data management (~15 minutes)
 * Filtering and cleaning data (~30 minutes; the `gapminder` dataset)
 * Reshaping and joining data (~30 minutes)
 * Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
+
+Slides: https://rpubs.com/bpbond/874167
 
 ## Requirements
 
@@ -43,21 +45,22 @@ versions of the following packages are installed:
 What we're working with today--the "tidyverse"--constitute a [particular and popular dialect of R](http://tidyverse.org),
 but the principles we'll go over are broadly applicable. 
 
-(I will point out base R equivalents as we go.)
-
 Like anything else, `dplyr` has advantages and disadvantages. In particular, **I do not recommend using it if you don't already have experience with base R**.
 
+I will point out base R equivalents as we go.
+
 More information: https://github.com/matloff/TidyverseSkeptic
+
+**The `data.table` package** is also worth checking out for its speed,
+stability, and zero dependencies.
 
 
 # Reproducibility and data management {.bigger}
 
-## Reproducibility...
+## Reproducible research...
 
 We are in the era of collaborative 'big data', but even if you work by yourself
 with 'little data' you have to have some skills to deal with those data.
-
-
 
 <div class='left' style='float:left;width:48%'>
 **Most fundamentally, your results have to be reproducible.**
@@ -74,12 +77,13 @@ with 'little data' you have to have some skills to deal with those data.
 ## ...is the future
 
 <div class='left' style='float:left;width:48%'>
-Even if you don't buy it, **prepare yourself for the future**. Funders, 
+**Prepare yourself for the future**. Funders, 
 journals, governments, colleagues are all pushing for more reproducibility and 
-openness. It's a slow but steady ratchet.
+openness: open-access journals, open code,
+and [data deposition](https://www.agu.org/-/media/Files/Publications/JGR-Biogeo-Data-Sharing-Guidance.pdf) 
+at the peer review stage and beyond.
 
-NSF, DOE, Wellcome, Gates, etc. are increasingly requiring data management plans;
-data deposition; and publication in open-access journals.
+It's a slow but steady ratchet.
 
 Reproducibility generally means *scripts* tied to *open source software* with 
 effective *data management* and *archiving*.
@@ -130,9 +134,9 @@ managing code and data:
 * Tracking *changes over time*
 * Understanding and reproducing the *analytical steps*.
 
-**Ideally, _every_ step in your analysis is programmatic**. 
+**Ideally, _every_ step in your analysis is programmatic**. This means it is performed by a script that can be read and understood in the future.
 
-This means it is performed by a script that can be read and understood in the future.
+Manual steps are hard to reproduce, laborious, and error-prone.
 
 ## Reproducibility is a process
 
@@ -162,7 +166,7 @@ rawdata/
 This directory contains *scripts* that are backed up both *locally* and *remotely*.
 It is under *version control*, so it's easy to track changes over time.
 
-There's also [targets](https://docs.ropensci.org/targets/), i.e. fully 
+There's also [targets](https://docs.ropensci.org/targets/) and [make](https://en.wikipedia.org/wiki/Make_(software)), i.e. fully 
 automated analysis workflows...but that's a topic for another day.
 
 
@@ -217,6 +221,9 @@ some_data_frame %>%
   getting_dizzy_from_so_much_doing()
 ```
 
+As noted above, **pipelines have tradeoffs** like any other tool.
+But they do provide easy-to-read algorithmic steps in many cases.
+
 Let's go over some of those possible `do_something` steps.
 
 ## Filter
@@ -232,6 +239,10 @@ gapminder %>%
 ```
 
 This is equivalent to base R's `subset` function.
+
+```{r, eval=FALSE}
+subset(gapminder, country == "Egypt")
+```
 
 ## Filter
 
@@ -261,6 +272,12 @@ There are lots of other cool ways to select columns--see `?select`.
 ```{r, eval=FALSE}
 gapminder %>% select(starts_with("c"))
 gapminder %>% select(where(is.numeric))
+```
+
+In base R:
+
+```{r, eval=FALSE}
+gapminder[c("pop", "year"),]
 ```
 
 ## <span style="color: red;">Exercise: filtering and selecting</span>
@@ -318,9 +335,8 @@ Egypt %>%
 
 Several important notes:
 
-1. You can have multiple assignments within a single `mutate`
-2. Doing so is more efficient than separate `mutate` calls
-3. New variables overwrite existing variables of the same name
+1. You can have multiple assignments within a single `mutate`; this is more efficient than separate `mutate` calls
+2. New variables overwrite existing variables of the same name
 
 ```{r, eval=FALSE}
 # This will not work correctly
@@ -558,11 +574,13 @@ These are generally known as *split-apply-combine* problems.
 ## Why we're focusing on dplyr
 
 <div class='left' style='float:left;width:48%'>
+**There are many ways to tackle split-apply-combine in R.**
+
 The `dplyr` package specializes in data frames, but also allows you 
 to work with remote, out-of-memory databases, using exactly the same tools, 
 because it abstracts away *how* your data is stored.
 
-`dplyr` is very fast for most, though not all, operations on _data frames_ (tabular data).
+`dplyr` is very fast for most, though not all, operations on _data frames_ (tabular data). But again, like any tool, it has some disadvantages too.
 </div>
 <div class='right' style='float:right;width:48%'>
 <img src="data-manipulation-images/dplyr_logo.png" width="300" />
@@ -570,24 +588,6 @@ because it abstracts away *how* your data is stored.
  <font size="2"> https://github.com/tidyverse/dplyr </font> 
 
 </div>
-
-## Why use dplyr?
-
-Why use `dplyr`?
-
-* Clean, concise, and consistent syntax
-* High performance in most cases
-* Same code can work with data frames or remote databases
-* Very popular; lots of help/documentation
-
-Why not?
-
-* Need for long-term stability
-* Programming can be trickier in some circumstances
-* Not as fast in certain cases
-
-**The `data.table` package** is very much worth checking out for its speed,
-stability, and zero dependencies.
 
 ## Verbs
 
@@ -623,6 +623,8 @@ Most frequently, that "next operation" is a
 gapminder %>%
   group_by(country) %>%
   summarise(maxpop = max(pop))
+
+# aggregate(. ~ country, data = gapminder, max)
 ```
 
 ## Summarising and columns
@@ -718,18 +720,11 @@ What does this calculate?
 
 ```{r, message=FALSE}
 babynames %>%
-  group_by(year, sex) %>%
-  summarise(prop = max(prop),
-            name = name[which.max(prop)])
-```
-
-`dplyr` now provides a function to do this operation in one line:`
-
-```{r, eval=FALSE}
-babynames %>%
     group_by(year, sex) %>%
     slice_max(prop)
 ```
+
+The various `slice_` functions are quite handy.
 
 ## Summarizing babynames
 
