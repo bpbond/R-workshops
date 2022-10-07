@@ -38,9 +38,16 @@ versions of the following packages are installed:
 - `gapminder` - life expectancy, GDP per capita, and population for 142 countries
 - `babynames` - names provided to the SSA 1880-2017
 
-The first two constitute a [particular and popular dialect of R](http://tidyverse.org),
+## A note about 'tidyverse'
+
+What we're working with today--the "tidyverse"--constitute a [particular and popular dialect of R](http://tidyverse.org),
 but the principles we'll go over are broadly applicable. 
+
 (I will point out base R equivalents as we go.)
+
+Like anything else, `dplyr` has advantages and disadvantages. In particular, **I do not recommend using it if you don't already have experience with base R**.
+
+More information: https://github.com/matloff/TidyverseSkeptic
 
 
 # Reproducibility and data management {.bigger}

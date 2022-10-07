@@ -9,7 +9,6 @@ output: slidy_presentation
 knitr::opts_chunk$set(echo = TRUE)
 
 library(dplyr)
-library(kableExtra)
 library(ggplot2)
 theme_set(theme_bw())
 ```
