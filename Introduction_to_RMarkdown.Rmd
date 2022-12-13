@@ -39,6 +39,8 @@ This is intended to be a hands-on workshop, so also:
 * You have R (and probably RStudio) installed
 * You have the [rmarkdown](https://cran.r-project.org/web/packages/rmarkdown/index.html) package installed
 
+**Note:** this presentation doesn't (yet) cover the newer [Quarto](https://quarto.org) publishing system, but will provide a good foundation for learning it.
+
 
 ## Reproducible documents {data-background=#cceeff}
 
