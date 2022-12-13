@@ -1,0 +1,570 @@
+---
+title: "Introduction to data visualization using ggplot2 (part 2)"
+author: "BBL and SCP"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    code_folding: show
+---
+
+Part 1 is [here](https://rpubs.com/bpbond/727254).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(emo)  # install via devtools::install_github("hadley/emo")
+library(ggplot2)
+
+iris_long <- reshape(iris, 
+                     varying = c("Sepal.Length", 
+                                 "Sepal.Width",
+                                 "Petal.Length",
+                                 "Petal.Width"), 
+                     timevar = "dimension",
+                     direction = "long")
+iris_plot <- ggplot(iris_long, aes(x = Sepal, 
+                                   y = Petal, 
+                                   color = Species))
+```
+
+# Steps to a ggplot2 plot
+
+## 4. Geoms
+
+<img src="images-ggplot2/layers-4-geoms.png" width = "100%">
+
+### _Now_ we can plot iris! {.tabset}
+
+Compare the ggplot2 code to the base R code we saw earlier:
+
+#### ggplot2
+
+```{r iris-plot-ggplot}
+ggplot(iris) + 
+  # This aes() call sets up the PLOT LEVEL aesthetics
+  aes(x = Sepal.Length, y = Sepal.Width, color = Species) + 
+  geom_point()
+```
+
+#### base R
+
+```{r iris-plot-base2}
+plot(iris$Sepal.Length, iris$Sepal.Width, col = iris$Species)
+legend(7, 4.3, 
+       unique(iris$Species),
+       col=1:length(iris$Species), 
+       pch = 1)
+```
+
+Now the advantages of ggplot2 and the grammar-of-graphics approach start to get clear.
+
+### Same data, different geoms {.tabset}
+
+Geoms have different aesthetic requirements, and not every geom works with every dataset (visually or computationally): 
+
+```{r}
+# Note now the aes() call is INSIDE the ggplot() call--makes it obvious that these
+# are the initial, PLOT LEVEL aesthetics
+iris_plot <- ggplot(iris_long, aes(x = Sepal, 
+                                   y = Petal, 
+                                   color = Species))
+```
+
+#### geom_point
+
+```{r iris-plot-point}
+iris_plot + geom_point()
+```
+
+#### geom_line
+
+```{r iris-plot-line}
+iris_plot + geom_line()
+```
+
+#### geom_bin2d
+
+```{r iris-plot-bin2d}
+iris_plot + geom_bin2d()
+```
+
+#### geom_violin
+
+```{r iris-plot-violin}
+iris_plot + geom_violin()
+```
+
+#### geom_dotplot
+
+```{r iris-plot-dotplot, error=TRUE}
+iris_plot + geom_dotplot()
+```
+
+
+### Using multiple geoms
+
+You can have as many geoms in a plot as you want. Later geoms are drawn
+in front of earlier ones:
+
+```{r two-geoms}
+iris_plot + geom_density_2d() + geom_point()
+```
+
+### Geoms and aesthetics
+
+Because of the _layering principle_ we discussed above, later steps and in
+particular geoms override earlier ones as the plot is built up.
+
+In particular, if you define aesthetics in geoms they override any earlier definitions _but only within that geom_:
+
+```{r two-geoms-aesthetics}
+# Note that, as before, aesthetics are mapped to variables inside an aes() call
+# If we want to map an aesthetic to a constant value we do so OUTSIDE aes()
+# E.g., + geom_point(color = "red")
+iris_plot + geom_density_2d() + geom_point(aes(color = dimension))
+```
+
+This doesn't make much sense, but this might:
+
+```{r two-geoms-aesthetics2}
+iris_plot + 
+  geom_density_2d(aes(linetype = dimension)) + 
+  geom_point(aes(shape = dimension))
+```
+
+**What aesthetics are operative in this plot?**
+
+* At the _plot level_, `x = Sepal`, `y = Petal`, and `color = Species`
+* The plot aesthetics hold for `geom_point` but it _also_ uses `shape = dimension`
+* The plot aesthetics hold for `geom_density2d` but it _also_ uses `linetype = dimension`
+
+### Geoms that compute things {.tabset}
+
+Some geoms don't take both `x` and `y` aesthetics; rather, they take just one and compute the other, or they transform one of the aesthetics by some computation. _How_ this happens is beyond our scope here (come back next week!) but let's look at a couple of examples.
+
+#### geom_histogram
+
+```{r geom_compute1}
+ggplot(iris_long) +
+  aes(x = Sepal) +
+  geom_histogram()
+```
+
+#### geom_boxplot
+
+```{r geom_compute2}
+ggplot(iris_long) +
+  aes(x = Species, y = Sepal) +
+  geom_boxplot()
+```
+
+#### geom_boxplot (2)
+
+```{r geom_compute3}
+ggplot(iris_long) +
+  aes(x = Species, y = Sepal) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.5, aes(color = dimension))
+```
+
+Notice how the final boxplot-and-point plot makes it clear that the
+boxplot-only plot **is highly deceptive**: there are two groups of data here
+(two dimensions that were measured), and you probably wouldn't want to present
+them combined together.
+
+Remember one of the 10 data visualization principles [above](#dataviz): **visualize your _data_, not just summaries!**
+
+
+### Data-less geoms
+
+Some geoms are handy for annotation or to help with interpretation:
+
+```{r two-geoms-ablines}
+iris_plot + 
+  geom_density_2d(aes(linetype = dimension)) + 
+  geom_point(aes(shape = dimension)) +
+  # vertical line
+  geom_vline(xintercept = 5, size = 3) +
+  # horizontal line
+  geom_hline(yintercept = 6, color = "purple", linetype = 2) +
+  # a-b line
+  geom_abline(size = 10, alpha = 0.25, slope = 0.3, intercept = 1)
+```
+
+There's also a useful `annotate()` function; see its documentation.
+
+
+### What geom should I use?
+
+The question here is really: *_what are you trying to communicate?_*
+
+(See notes under Data visualization section [above](#dataviz).)
+
+| If you want to...                                 | ...try this geom                         |
+| --------------------------------------------------|------------------------------------------|
+| show the relationship between two variables       | `geom_point` `geom_jitter`               |
+| show values over time or a series                 | `geom_bar` `geom_line`                   |
+| show data distribution (1D)                       | `geom_histogram` `geom_density`          |
+| show data distribution (against another variable) | `geom_boxplot` `geom_violin`             |
+| show data distribution (2D)                       | `geom_hex` `geom_bin2d`                  | 
+| analyze trends                                    | `geom_smooth` `geom_line`                |
+
+
+### Smoothers and models
+
+We frequently would like to fit, or show, trend lines with point data. The
+easiest way to do this is with `geom_smooth()`:
+
+```{r iris-smooth1}
+iris_plot + geom_point() + geom_smooth()
+```
+
+What's happened here?
+
+* By default, `geom_smooth` uses a [loess smoother](http://r-statistics.co/Loess-Regression-With-R.html),
+which is just a form
+of [local regression](https://en.wikipedia.org/wiki/Local_regression)
+* This is noted in the diagnostic message printed by `geom_smooth` 
+* `geom_smooth` inherited the plot aesthetics (x, y, color), so it fit separately to each color (group of data)
+
+More likely, we would like a simple linear regression---i.e., trend lines. For this we just need to override the default and tell is to use R's [lm](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/lm) function:
+
+```{r iris-smooth2, message=FALSE}
+iris_plot + geom_point() + geom_smooth(method = "lm")
+```
+
+We might also want to fit an _overall_ trend line, to the pooled data (i.e.,
+without groups). You might be tempted in this case to override the
+color aesthetic to a constant value. This works, but it's not ideal. Better:
+
+```{r iris-smooth3, message=FALSE}
+iris_plot + geom_point() + 
+  geom_smooth(method = "lm") +   # per-group trend line
+  geom_smooth(method = "lm",  
+              color = "black", 
+              group = 1,         # pooled; intent is clear
+              linetype = 2)       
+```
+
+Behind the scenes:
+
+* Our `color` aesthetic controls the `group` aesthetic in this plot
+* `group` is ultimately what determines how the data are split up for computation and plotting
+* Setting `group = 1` makes it crystal clear what we want:
+a single `group` for the second `geom_smooth`.
+
+Finally, we can use any smoothing function we want, including custom ones.
+
+```{r iris-smooth4, message=FALSE}
+ggplot(iris_long, aes(Sepal, Petal)) + 
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), color = "red")    
+```
+
+## 3. Labels
+
+<img src="images-ggplot2/layers-3-labels.png" width = "100%">
+
+Labeling your plots well is [important](https://xkcd.com/833/).
+
+![](https://imgs.xkcd.com/comics/convincing.png)
+
+As we've seen, ggplot2 takes its default axis and aesthetic labels from the columns you specify. These are easy to change using the `xlab` and `ylab` functions; the `ggtitle` function is available as well:
+
+```{r iris-labels, message=FALSE}
+iris_plot + geom_point() + 
+  geom_smooth() +
+  xlab("What is a sepal again?") +
+  ylab("Petal (cm)") +
+  ggtitle("This is starting to look like a real plot!")
+```
+
+
+## 2. Themes
+
+<img src="images-ggplot2/layers-2-themes.png" width = "100%">
+
+ggplot2's theme system is powerful and sometimes confusing. Like
+the rest of the ggplot system, it uses the idea of _inheritance_: you can apply themes, or aspects of them, to entire plots, sub-elements, or small details, and changes cascade down.
+
+The simplest step is to apply a theme to an entire plot:
+
+### Theme examples {.tabset}
+
+#### theme_gray
+
+```{r iris-theme1}
+iris_plot + geom_point() + theme_gray()
+```
+
+#### theme_dark
+
+```{r iris-theme4}
+iris_plot + geom_point() + theme_dark()
+```
+
+#### theme_minimal
+
+```{r iris-theme5}
+iris_plot + geom_point() + theme_minimal()
+```
+
+#### theme_cowplot
+
+_Many_ more themes are available in other R packages and online repositories:
+
+```{r iris-theme6, message=FALSE}
+library(cowplot)
+iris_plot + geom_point() + theme_cowplot()
+```
+
+#### theme_economist
+
+_Many_ more themes are available in other R packages and online repositories:
+
+```{r iris-theme7, message=FALSE, warning=FALSE}
+library(ggthemes)
+iris_plot + geom_point() + theme_economist()
+```
+
+### {-}
+
+The theming system is also how we change specific aspects of plots.
+
+### Theme inheritance {.tabset}
+
+Let's say we want to apply some formatting to text in our plot. But, _which_ text?
+
+#### All text
+
+```{r iris-texttheme1}
+iris_plot + geom_point() + ggtitle("Iris") +
+  theme(text = element_text(size = 20, color = "red")) 
+```
+
+#### Axis text
+
+```{r iris-texttheme2}
+iris_plot + geom_point() + ggtitle("Iris") +
+  theme(axis.text = element_text(size = 20, color = "red")) 
+```
+
+#### x axis text
+
+```{r iris-texttheme3}
+iris_plot + geom_point() + ggtitle("Iris") +
+  theme(axis.text.x = element_text(size = 20, color = "red")) 
+```
+
+#### Bottom x axis text
+
+```{r iris-texttheme4}
+iris_plot + geom_point() + ggtitle("Iris") +
+  theme(axis.text.x.bottom = element_text(size = 20, color = "red")) 
+```
+
+#### All titles
+
+```{r iris-texttheme5}
+iris_plot + geom_point() + ggtitle("Iris") +
+  theme(title = element_text(size = 20, color = "red")) 
+```
+
+#### Axis titles
+
+```{r iris-texttheme6}
+iris_plot + geom_point() + ggtitle("Iris") +
+  theme(axis.title = element_text(size = 20, color = "red")) 
+```
+
+### {-}
+
+We can do similar things with any other aspect of the plot: grid lines, legends, backgrounds, etc. From the [help page](https://ggplot2.tidyverse.org/reference/theme.html):
+
+>Theme elements inherit properties from other theme elements hierarchically. For example, `axis.title.x.bottom` inherits from `axis.title.x` which inherits from `axis.title`, which in turn inherits from `text`. **All text elements inherit directly or indirectly from `text`; all lines inherit from `line`, and all rectangular objects inherit from `rect`.** This means that you can modify the appearance of multiple elements by setting a single high-level component.
+
+**Interestingly** (I just realized this in preparing these slides) this seems to be wrong or at least incomplete? I don't understand why `axis.text` isn't inheriting from `text` (which is what the documentation says). `r emo::ji("shrug")`
+
+
+## 1. Facets
+
+<img src="images-ggplot2/layers-1-facets.png" width = "100%">
+
+Facets are multi-panel plots that show different _subsets_ of a data frame. They work best on discrete variables and can help clear up a busy plot.
+
+- `facet_grid` is a rigid m x n matrix and best used with multiple variables
+- `facet_wrap` is a long ribbon of panels that can be **wrapped** into any number of columns using `ncol` and best used with a single variable
+
+### Faceting examples {.tabset}
+
+**Which of these is the best visualization? Why?**
+
+#### None
+
+```{r iris-facetwrap0}
+iris_plot + geom_point()
+```
+
+#### by `Species`
+
+```{r iris-facetwrap1}
+iris_plot + geom_point() + facet_wrap(~Species)
+```
+
+#### by `dimension`
+
+```{r iris-facetwrap2}
+iris_plot + geom_point() + facet_wrap(~dimension)
+```
+
+#### by both
+
+```{r iris-facetwrap3}
+iris_plot + geom_point() + facet_grid(Species ~ dimension)
+```
+
+### {-}
+
+At this point, we've pretty much arrived at our final plot!
+
+<img src="images-ggplot2/layers-final-plot.png" width = "100%">
+
+
+# Accessibility {.tabset}
+
+At a minimum, be aware that some of the default colors in ggplot2 have equal [luminance](http://www.workwithcolor.com/color-luminance-2233.htm) and so can be difficult to distinguish, particularly for colorblind viewers.
+
+We can change colors and palettes, however; for example, the [Viridis](https://www.thinkingondata.com/something-about-viridis-library/) color scales included with ggplot2 are designed to be perceptually uniform in both color and black-and-white. They are also designed to be perceived by viewers with common forms of color blindness.
+
+Use `viridsd()` with discrete data, and `viridisc()` with continuous data.
+
+The [RColorBrewer](https://cran.r-project.org/web/packages/RColorBrewer/RColorBrewer.pdf) package is another good option worth looking into.
+
+```{r, txhousing0, echo=FALSE}
+txsamp <- subset(txhousing, city %in%
+                   c("Houston", "Fort Worth", "San Antonio", "Dallas", "Austin"))
+tx_housing <- ggplot(data = txsamp, aes(x = sales, y = median)) + 
+  geom_point(aes(colour = city))
+```
+
+## Default
+
+```{r txhousing1}
+tx_housing  # down-sampled from the "txhousing" dataset
+```
+
+## scale_colour_viridis_d
+
+```{r txhousing2}
+tx_housing + scale_color_viridis_d()
+```
+
+
+# Using and saving plots
+
+Note that `ggplot()` objects are just like any other R object, and can be printed (displaying the plot), passed to functions, saved to disk, etc.
+
+The primary way to save a _plot image_ is the `ggsave()` function:
+
+```{r, eval=FALSE}
+p <- ggplot(cars, aes(speed, dist)) + geom_point()
+print(p)
+ggsave("cars_plot.pdf")
+
+# You can specify file types and dimensions:
+q <- ggplot(iris, aes(Sepal.Length)) + geom_histogram()
+print(q)
+ggsave("iris_plot.png", width = 8, height = 5)
+
+# By default ggsave assumes you mean "save the last plot generated"
+# but you can save arbitrary objects:
+ggsave("cars_plot.jpg", plot = p + theme_bw())
+```
+
+<img src="images-ggplot2/saved-plots.png" width = "75%">
+
+
+# A complicated example
+
+This figure is from a [recent paper](https://onlinelibrary.wiley.com/doi/full/10.1111/gcb.15353) we published with many co-authors in GCB:
+
+<img src="images-ggplot2/figure3-climate-whittaker.png" width = "100%">
+
+This seems---and is---complex, but you now have the tools to see what's happening in the code that generates the figure.
+
+```{r, eval=FALSE}
+# Whittaker biome plot
+library(plotbiomes)
+p_inset <- whittaker_base_plot() +
+  geom_point(data = cosore_points, 
+             aes(x = mat_cosore, y = map_cosore / 10),
+             color = "black", shape = 4) +
+  coord_cartesian(ylim = c(0, 500)) +
+  theme(axis.title = element_blank(),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.4, "lines"),
+        legend.position = c(0.35, 0.75),
+        legend.title = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        panel.border = element_rect(colour = "black", 
+                                    fill = NA, size = 0.5))
+
+# SP's main climate space plot
+p <- ggplot() +
+  geom_hex(data = map_mat_global,
+           aes(x = mat, y = map / 10), 
+           bins = 100, na.rm = TRUE) +
+  scale_fill_viridis_c(name = "Grid cells", begin = 0.85, end = 0) +
+  geom_point(data = cosore_points, 
+             aes(x = mat_cosore, y = map_cosore / 10),
+             color = "black", shape = 4, size = 1.5, na.rm = TRUE) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0, 500)) +
+  labs(x = "MAT (°C)", y = "MAP (cm)")
+
+# Inset the first inside the second
+library(cowplot, quietly = TRUE)
+ggdraw() +
+  draw_plot(p) +
+  draw_plot(p_inset, x = 0.1, y = 0.52, width = 0.4, height = 0.45)
+```
+
+# Fancier things
+
+This workshop has covered a lot of ground, and necessarily skipped over and/or fudged
+some concepts for clarity and time.
+
+Important things we haven't talked about include:
+
+- **Statistical transformations**
+- **Scales and coordinate systems**
+- Plotting dates, maps, animations
+- Swapping in new data to an existing plot 
+- Combining different plots in a larger figure
+
+Some of these are built into ggplot2, but there's also a whole
+ecosystem of extension packages that people have written.
+
+
+# Resources
+
+[This](https://www.cedricscherer.com/2019/05/17/the-evolution-of-a-ggplot-ep.-1/) is a great walkthrough of the evolution of a complex and beautiful visualization:
+
+<img src="images-ggplot2/evolution.png" width = "100%">
+
+- RStudio ggplot2 [cheat sheet](https://rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf)
+- The ggplot2 [online help](https://ggplot2.tidyverse.org/reference/)
+- The grammar of graphics [paper](https://vita.had.co.nz/papers/layered-grammar.pdf)
+- The ggplot2 [book](https://ggplot2-book.org/)
+
+This presentation was written in [R Markdown](https://rmarkdown.rstudio.com).
+
+- The presentation in html format is [here](https://rpubs.com/bpbond/727254)
+- The repository is [here](https://github.com/JGCRI/Rworkshops)
+- The Intermediate ggplot workshop slides are [here](https://rpubs.com/bpbond/727258)
