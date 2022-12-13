@@ -385,6 +385,6 @@ Thanks for attending this introduction to R Markdown documents workshop! We hope
 
 This presentation was made using R Markdown version `r packageVersion("rmarkdown")` running under `r R.version.string`.
 
-These slides are available at https://rpubs.com/bpbond/983108.
+These slides are available at https://rpubs.com/bpbond/983114.
 
 They were written in R Markdown! The code is [here](https://github.com/bpbond/R-workshops/blob/main/Introduction_to_RMarkdown.Rmd).
