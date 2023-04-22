@@ -1,0 +1,22 @@
+---
+title: "maps"
+format: html
+editor: visual
+---
+
+## Maps
+
+```{r}
+library(ggmap)
+
+us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
+usmap <- get_stamenmap(us, zoom = 5, maptype = "terrain-background")
+ggmap(usmap)
+
+ggmap(usmap) + geom_point(data = data.frame(lon = c(-100, -90), lat = c(30, 40)))
+
+world <- c(left = -179, bottom = -60, right = 179, top = 75)
+world_map <- get_stamenmap(bbox = world, zoom  = 2, maptype = "terrain-background")
+ggmap()
+
+```
