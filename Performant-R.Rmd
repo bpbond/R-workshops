@@ -1,0 +1,221 @@
+---
+title: "Performant-R"
+output: ioslides_presentation
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(microbenchmark)
+library(ggplot2)
+library(dplyr)
+```
+
+
+## Performant R
+
+# Premature optimization is the root of all evil
+
+Seriously:
+
+## Premature optimization
+
+"Premature optimization is the root of all evil" is one of the most 
+[famous quotes](https://en.wikiquote.org/wiki/Donald_Knuth) in computer science.
+
+>"Premature optimization" is a phrase used to describe a situation where a programmer lets performance considerations affect the design of a piece of code. This can result in a design that is not as clean as it could have been or code that is incorrect, because the code is complicated by the optimization and the programmer is distracted by optimizing.
+
+[Wikipedia](https://en.wikipedia.org/wiki/Program_optimization#When_to_optimize)
+    
+xkcd
+
+## Use R's vectorisation whenever possible
+
+Loops aren't necessarily slow...but whenever possible, use R's built-in
+_vectorisation_ (ability to operate concurrently on all elements of a vector).
+
+
+## Don't carry unnecessary data
+
+Subset/filter data _before_ computing on it; otherwise, you're doing 
+unnecessary work.
+
+Here we compute the mean price by color for "Ideal" diamonds:
+
+```{r carry-data, echo=TRUE}
+library(ggplot2) # for 'diamonds'
+library(dplyr)
+postfilter <- function() {
+    diamonds %>% 
+        group_by(cut, color) %>% 
+        summarise(mean(price), .groups = "drop") %>%
+        filter(cut == "Ideal")
+}
+```
+
+## Don't carry unnecessary data
+
+Subset/filter data _before_ computing on it; otherwise, you're doing 
+unnecessary work.
+
+Same operation, but first we isolate just the data we're interested in:
+
+```{r pre-filter, echo=TRUE}
+prefilter <- function() {
+    diamonds %>% 
+        filter(cut == "Ideal") %>% 
+        group_by(color) %>% 
+        summarise(mean(price))
+}
+```
+
+## Don't carry unnecessary data
+
+Subset/filter data _before_ computing on it; otherwise, you're doing 
+unnecessary work.
+
+Timing difference:
+
+```{r, warning=FALSE}
+x <- microbenchmark(postfilter(), prefilter())
+print(x, signif = 3)
+```
+
+(This difference will get worse with larger data frames!)
+
+## Don't do unnecessary things
+
+Move any unnecesssary computations _outside_ of loops or repeatedly-called
+functions.
+
+For example, here we repeatedly calculate `avg` inside the loop:
+
+```{r cruft-in-loop, echo=TRUE}
+very_slow_average <- function(x) {
+    sm <- 0
+    for(i in seq_along(x)) {
+        sm <- sm + x[i]
+        avg <- sm / i
+    }
+    avg
+}
+```
+
+## Don't do unnecessary things
+
+Move any unnecesssary computations _outside_ of loops or repeatedly-called
+functions.
+
+Here we calculate `avg` only once, after the loop is finished:
+
+```{r less-cruft-in-loop, echo=TRUE}
+slow_average <- function(x) {
+    sm <- 0
+    for(i in x) {
+        sm <- sm + i
+    }
+    sm / length(x)
+}
+```
+
+## Don't do unnecessary things
+
+Move any unnecesssary computations _outside_ of loops or repeatedly-called
+functions.
+
+Timing difference:
+
+```{r, warning=FALSE}
+x <- microbenchmark(very_slow_average(1:100), slow_average(1:100), mean(1:100))
+print(x, signif = 3)
+```
+
+Wait, **why isn't there a bigger difference** between `slow_average` and R's
+built-in `mean` function?!? 
+
+We'll come back to that.
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
+
+```{r rbind-in-loop, echo=TRUE}
+rbind_in_loop <- function() {
+    out <- data.frame()
+    for(i in 1:100) out <- rbind(out, iris)
+    out
+}
+```
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a list of the 100 data frames and then calling `rbind` once:
+
+```{r use-a-list, echo=TRUE}
+use_a_list <- function() {
+    out <- list()
+    for(i in 1:100) out[[i]] <- iris
+    do.call("rbind", out) # or dplyr::bind_rows()
+}
+```
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Timing difference:
+
+```{r, warning=FALSE}
+x <- microbenchmark(rbind_in_loop(), use_a_list())
+print(x, signif = 3)
+```
+
+(This difference will get _much_ worse with larger data frames!)
+
+## Parallelize on your machine
+
+For tasks that are [embarrassingly parallel](),
+R"s built-in `parallel` can be a life-changer.
+
+```{r, echo=TRUE}
+expensive_job <- function(x) Sys.sleep(2)
+
+serial_approach <- function() lapply(1:4, expensive_job)
+
+library(parallel)
+parallel_approach <- function() mclapply(1:4, expensive_job, mc.cores = 4)
+```
+
+## Parallelize on your machine
+
+For tasks that are [embarrassingly parallel](),
+R"s built-in `parallel` can be a life-changer.
+
+```{r, warning=FALSE}
+x <- microbenchmark(serial_approach(), parallel_approach(), times = 1)
+print(x, signif = 3)
+```
+
+
+
+
+## Understand the JIT compiler
+
+
+## The R Profiler
+
+## Rcpp
+
+## HPC
+
+
