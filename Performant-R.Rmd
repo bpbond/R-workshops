@@ -23,17 +23,62 @@ Seriously:
 "Premature optimization is the root of all evil" is one of the most 
 [famous quotes](https://en.wikiquote.org/wiki/Donald_Knuth) in computer science.
 
->"Premature optimization" is a phrase used to describe a situation where a programmer lets performance considerations affect the design of a piece of code. This can result in a design that is not as clean as it could have been or code that is incorrect, because the code is complicated by the optimization and the programmer is distracted by optimizing.
+>_Premature optimization_ is a phrase used to describe a situation where a programmer lets performance considerations affect the design of a piece of code. This can result in a design that is not as clean as it could have been or code that is incorrect, because the **code is complicated** by the optimization and the **programmer is distracted** by optimizing.
 
 [Wikipedia](https://en.wikipedia.org/wiki/Program_optimization#When_to_optimize)
-    
-xkcd
 
-## Use R's vectorisation whenever possible
+## Premature optimization
 
-Loops aren't necessarily slow...but whenever possible, use R's built-in
-_vectorisation_ (ability to operate concurrently on all elements of a vector).
+```{r, out.width = "300px"}
+knitr::include_graphics("images-performance/optimization_2x.png")
+```
 
+https://xkcd.com/1691/
+
+## Use R's vectorisation when possible
+
+Loops in R are not necessarily slow...but whenever possible,
+make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
+
+**Know your language.**
+
+## Use R's vectorisation when possible
+
+Loops in R are not necessarily slow...but whenever possible,
+make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
+
+```{r eval=FALSE, echo=TRUE}
+# Naive, non-vectorised approach
+lsum <- 0
+for(i in 1:length(x)) {
+    lsum <- lsum + log(x[i])
+}
+
+# The clearer, faster R approach
+lsum <- sum(log(x))
+```
+
+"This is speaking R with a C accent—a strong accent" [R Inferno](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf)
+
+## Use R's vectorisation when possible
+
+Timing difference:
+
+```{r, warning=FALSE}
+loop <- function(x) {
+    lsum <- 0
+    for(i in 1:length(x)) {
+        lsum <- lsum + log(x[i])
+    }
+    lsum
+}
+
+# The clearer, faster R approach
+vectorised <- function(x) sum(log(x))
+
+x <- microbenchmark(loop(1:100), vectorised(1:100))
+print(x, signif = 3)
+```
 
 ## Don't carry unnecessary data
 
@@ -82,6 +127,53 @@ print(x, signif = 3)
 ```
 
 (This difference will get worse with larger data frames!)
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
+
+```{r rbind-in-loop, echo=TRUE}
+rbind_in_loop <- function() {
+    out <- data.frame()
+    for(i in 1:100) out <- rbind(out, iris)
+    out
+}
+```
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a list of the 100 data frames and then calling `rbind` once:
+
+```{r use-a-list, echo=TRUE}
+use_a_list <- function() {
+    out <- list()
+    for(i in 1:100) out[[i]] <- iris
+    do.call("rbind", out) # or dplyr::bind_rows()
+}
+```
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Timing difference:
+
+```{r, warning=FALSE}
+x <- microbenchmark(rbind_in_loop(), use_a_list())
+print(x, signif = 3)
+```
+
+(This difference will get _much_ worse with larger data frames!)
 
 ## Don't do unnecessary things
 
@@ -133,83 +225,75 @@ print(x, signif = 3)
 Wait, **why isn't there a bigger difference** between `slow_average` and R's
 built-in `mean` function?!? 
 
-We'll come back to that.
+## R's JIT compiler
 
-## Understand memory allocation
+Most of ther `slow_average()` calls weren't so slow because of R's
+Just In Time (JIT) compiler.
 
-When we `rbind` (and similar operations), R computes how much memory is needed
-for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
-location, and frees the old objects. **This is expensive.**
+An (old) example from [Dirk Eddelbuettel](http://dirk.eddelbuettel.com/blog/2011/04/12/):
 
-Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
-
-```{r rbind-in-loop, echo=TRUE}
-rbind_in_loop <- function() {
-    out <- data.frame()
-    for(i in 1:100) out <- rbind(out, iris)
-    out
-}
+```{r, echo=TRUE}
+h <- function(n, x=1) for (i in 1:n) x=(1+x)^(-1)
+print(h)
 ```
 
-## Understand memory allocation
+Printing `h` shows it to be a function, just as we expect.
 
-When we `rbind` (and similar operations), R computes how much memory is needed
-for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
-location, and frees the old objects. **This is expensive.**
+## R's JIT compiler
 
-Creating a list of the 100 data frames and then calling `rbind` once:
-
-```{r use-a-list, echo=TRUE}
-use_a_list <- function() {
-    out <- list()
-    for(i in 1:100) out[[i]] <- iris
-    do.call("rbind", out) # or dplyr::bind_rows()
-}
+```{r, echo=TRUE}
+h(1e6) # run h() with a large n
+print(h)
 ```
 
-## Understand memory allocation
+That's changed! Behind the scenes R has replaced our function with a _compiled_
+version of it. **This compiled version is usually much faster.**
 
-When we `rbind` (and similar operations), R computes how much memory is needed
-for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
-location, and frees the old objects. **This is expensive.**
-
-Timing difference:
-
-```{r, warning=FALSE}
-x <- microbenchmark(rbind_in_loop(), use_a_list())
-print(x, signif = 3)
-```
-
-(This difference will get _much_ worse with larger data frames!)
+R is very smart about when to compile functions, and you don't usually have
+to think about it. But it can mean that time-intensive functions run
+faster upon re-use.
 
 ## Parallelize on your machine
 
-For tasks that are [embarrassingly parallel](),
-R"s built-in `parallel` can be a life-changer.
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel), and 
+compute-bound, R's built-in `parallel` package can be a life-changer.
+
+Use `mclapply()` to split a job across the different _cores_ of your
+local machine:
 
 ```{r, echo=TRUE}
 expensive_job <- function(x) Sys.sleep(2)
 
+# Normal approach using lapply()
 serial_approach <- function() lapply(1:4, expensive_job)
 
+# Parallelized version using mclapply()
 library(parallel)
-parallel_approach <- function() mclapply(1:4, expensive_job, mc.cores = 4)
+parallel_approach <- function() mclapply(1:4, 
+                                         expensive_job, 
+                                         mc.cores = 4)
 ```
 
 ## Parallelize on your machine
 
-For tasks that are [embarrassingly parallel](),
-R"s built-in `parallel` can be a life-changer.
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel),
+R's built-in `parallel` package can be a life-changer.
+
+Timing difference:
 
 ```{r, warning=FALSE}
 x <- microbenchmark(serial_approach(), parallel_approach(), times = 1)
 print(x, signif = 3)
 ```
 
+## Parallelize on your machine
 
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel),
+R's built-in `parallel` package can be a life-changer.
 
-
-## Understand the JIT compiler
+Note that **there is a small computational cost to sending jobs to new cores**,
+so you may need to evaluate how 'big' (expensive) jobs are and how
+they should be split up.
 
 
 ## The R Profiler
