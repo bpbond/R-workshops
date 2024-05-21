@@ -59,7 +59,7 @@ https://xkcd.com/1445/
 ## Use R's vectorisation when possible
 
 Loops in R are not necessarily slow...but whenever possible,
-make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
+make use of R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
 
 ```{r}
 a <- c(1, 1, 2, 3, 5, 8)
@@ -69,7 +69,7 @@ a + 1
 ## Use R's vectorisation when possible
 
 Loops in R are not necessarily slow...but whenever possible,
-make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
+make use of R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
 
 ```{r eval=FALSE}
 # Naive, non-vectorised approach
@@ -178,7 +178,7 @@ unnecessary work.
 
 Timing difference:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 x <- microbenchmark(postfilter(), prefilter())
 print(x, signif = 3)
 ```
@@ -228,7 +228,7 @@ functions.
 
 Timing difference:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 x <- microbenchmark(very_slow_average(1:100), slow_average(1:100), mean(1:100))
 print(x, signif = 3)
 ```
@@ -363,7 +363,7 @@ R Profiler - TODO
 
 # Do With More
 
-## Parallelize on your machine
+## Parallelize locally
 
 For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
 compute-bound, R's built-in `parallel` package can be a life-changer.
@@ -384,7 +384,7 @@ parallel_approach <- function() mclapply(1:4,
                                          mc.cores = 4)
 ```
 
-## Parallelize on your machine
+## Parallelize locally
 
 For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
 compute-bound, R's built-in `parallel` package can be a life-changer.
@@ -396,7 +396,7 @@ x <- microbenchmark(serial_approach(), parallel_approach(), times = 1)
 print(x, signif = 3)
 ```
 
-## Parallelize on your machine
+## Parallelize locally
 
 For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
 compute-bound, R's built-in `parallel` package can be a life-changer.
