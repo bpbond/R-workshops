@@ -1,18 +1,31 @@
 ---
-title: "Performant-R"
+title: "Performant R Code"
 output: ioslides_presentation
+author: "Ben Bond-Lamberty"
 date: "`r Sys.Date()`"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 library(microbenchmark)
 library(ggplot2)
 library(dplyr)
 ```
 
 
-## Performant R
+## Performant R Code
+
+Many books have been written about writing faster code in R and other languages.
+
+Our goal here is to cover what I view as the most common and useful tips
+and approaches for writing high-performing R code. These are laid out roughly
+in the order you should try them, i.e. increasing in complexity:
+
+* Don't Do It
+* Know The Language
+* Do Less
+* Do Smarter
+* Do With More
 
 # Don't Do It
 
@@ -27,11 +40,19 @@ library(dplyr)
 
 ## Premature optimization
 
-```{r, out.width = "300px"}
+```{r, out.width = "300px", echo=FALSE}
 knitr::include_graphics("images-performance/optimization_2x.png")
 ```
 
 https://xkcd.com/1691/
+
+## Premature optimization
+
+```{r, out.width = "500px", echo=FALSE}
+knitr::include_graphics("images-performance/efficiency_2x.png")
+```
+
+https://xkcd.com/1445/
 
 # Know The Language
 
@@ -40,12 +61,17 @@ https://xkcd.com/1691/
 Loops in R are not necessarily slow...but whenever possible,
 make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
 
+```{r}
+a <- c(1, 1, 2, 3, 5, 8)
+a + 1
+```
+
 ## Use R's vectorisation when possible
 
 Loops in R are not necessarily slow...but whenever possible,
 make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
 
-```{r eval=FALSE, echo=TRUE}
+```{r eval=FALSE}
 # Naive, non-vectorised approach
 lsum <- 0
 for(i in 1:length(x)) {
@@ -62,7 +88,7 @@ lsum <- sum(log(x))
 
 Timing difference:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 loop <- function(x) {
     lsum <- 0
     for(i in 1:length(x)) {
@@ -78,12 +104,16 @@ x <- microbenchmark(loop(1:100), vectorised(1:100))
 print(x, signif = 3)
 ```
 
+Throughout, we're using the [microbenchmark](https://cran.r-project.org/package=microbenchmark)
+package to quantify the speed of different approaches.
+
 ## Use dedicated functions and packages
 
 Specialized functions such as `colSums`, `rowSums`, `colMeans`, and `rowMeans` 
 are _fast_.
 
-```{r, echo=TRUE}
+```{r}
+# Create a large matrix and test different approaches
 x <- cbind(x1 = rnorm(1e4), x2 = rnorm(1e4))
 
 mbm <- microbenchmark(rowSums(x), 
@@ -114,7 +144,7 @@ unnecessary work.
 
 Here we compute the mean price by color for "Ideal" diamonds:
 
-```{r carry-data, echo=TRUE}
+```{r carry-data}
 library(ggplot2) # for 'diamonds'
 library(dplyr)
 postfilter <- function() {
@@ -132,7 +162,7 @@ unnecessary work.
 
 Same operation, but first we isolate just the data we're interested in:
 
-```{r pre-filter, echo=TRUE}
+```{r pre-filter}
 prefilter <- function() {
     diamonds %>% 
         filter(cut == "Ideal") %>% 
@@ -153,7 +183,8 @@ x <- microbenchmark(postfilter(), prefilter())
 print(x, signif = 3)
 ```
 
-(This difference will get worse with larger data frames!)
+This difference will get worse with larger data frames; carrying less data
+will also reduce memory usage.
 
 ## Don't do unnecessary things
 
@@ -162,7 +193,7 @@ functions.
 
 For example, here we repeatedly calculate `avg` inside the loop:
 
-```{r cruft-in-loop, echo=TRUE}
+```{r cruft-in-loop}
 very_slow_average <- function(x) {
     sm <- 0
     for(i in seq_along(x)) {
@@ -180,7 +211,7 @@ functions.
 
 Here we calculate `avg` only once, after the loop is finished:
 
-```{r less-cruft-in-loop, echo=TRUE}
+```{r less-cruft-in-loop}
 slow_average <- function(x) {
     sm <- 0
     for(i in x) {
@@ -212,7 +243,7 @@ Just In Time (JIT) compiler.
 
 An (old) example from [Dirk Eddelbuettel](http://dirk.eddelbuettel.com/blog/2011/04/12/):
 
-```{r, echo=TRUE}
+```{r}
 h <- function(n, x=1) for (i in 1:n) x=(1+x)^(-1)
 print(h)
 ```
@@ -221,7 +252,7 @@ Printing `h` shows it to be a function, just as we expect.
 
 ## R's JIT compiler
 
-```{r, echo=TRUE}
+```{r}
 h(1e6) # run h() with a large n
 print(h)
 ```
@@ -243,7 +274,7 @@ location, and frees the old objects. **This is expensive.**
 
 Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
 
-```{r rbind-in-loop, echo=TRUE}
+```{r rbind-in-loop}
 rbind_in_loop <- function() {
     out <- data.frame()
     for(i in 1:100) out <- rbind(out, iris)
@@ -259,7 +290,7 @@ location, and frees the old objects. **This is expensive.**
 
 Creating a list of the 100 data frames and then calling `rbind` once:
 
-```{r use-a-list, echo=TRUE}
+```{r use-a-list}
 use_a_list <- function() {
     out <- list()
     for(i in 1:100) out[[i]] <- iris
@@ -280,13 +311,13 @@ x <- microbenchmark(rbind_in_loop(), use_a_list())
 print(x, signif = 3)
 ```
 
-(This difference will get _much_ worse with larger data frames!)
+This difference will get _much_ worse with larger data frames!
 
 ## Think about your algorithms
 
 A clueless prime number algorithm:
 
-```{r, echo=TRUE}
+```{r}
 slow_prime <- function(n) {
     if(n == 2) return(TRUE)
     for(i in 2:(n-1)) {
@@ -303,7 +334,7 @@ slow_prime(7418)
 
 A slightly less naive prime number algorithm:
 
-```{r, echo=TRUE}
+```{r}
 less_slow_prime <- function(n) {
     if(n == 2) return(TRUE)
     for(i in 2:sqrt(n)) {              # <----
@@ -320,7 +351,7 @@ less_slow_prime(7418)
 
 Timing difference:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 n <- 7417
 x <- microbenchmark(slow_prime(n), less_slow_prime(n))
 print(x, signif = 3)
@@ -334,13 +365,13 @@ R Profiler - TODO
 
 ## Parallelize on your machine
 
-For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel), and 
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
 compute-bound, R's built-in `parallel` package can be a life-changer.
 
 Use `mclapply()` to split a job across the different _cores_ of your
 local machine:
 
-```{r, echo=TRUE}
+```{r}
 expensive_job <- function(x) Sys.sleep(2)
 
 # Normal approach using lapply()
@@ -355,8 +386,8 @@ parallel_approach <- function() mclapply(1:4,
 
 ## Parallelize on your machine
 
-For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel),
-R's built-in `parallel` package can be a life-changer.
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
+compute-bound, R's built-in `parallel` package can be a life-changer.
 
 Timing difference:
 
@@ -367,8 +398,8 @@ print(x, signif = 3)
 
 ## Parallelize on your machine
 
-For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel),
-R's built-in `parallel` package can be a life-changer.
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
+compute-bound, R's built-in `parallel` package can be a life-changer.
 
 Note that **there is a small computational cost to sending jobs to new cores**,
 so you may need to evaluate how 'big' (expensive) jobs are and how
@@ -376,7 +407,51 @@ they should be split up.
 
 ## Rcpp
 
-Rcpp - TODO
+Thanks to the [Rcpp package](https://cran.r-project.org/web/packages/Rcpp/index.html)
+it's straightforward to link R and C++ code; as a compiled and low-level language,
+the latter will usually be significantly faster.
+
+Consider an R function to test whether a number is odd:
+
+```{r}
+isOddR <- function(num = 10L) { 
+    result <- (num %% 2L == 1L) 
+    return(result)
+}
+
+isOddR(42L)
+```
+
+## Rcpp
+
+We can write a C++ version of this function and call it from R:
+
+```{r}
+library(Rcpp)
+cppFunction("
+bool isOddCpp(int num = 10) {
+   bool result = (num % 2 == 1);
+   return result;
+}")
+
+isOddCpp
+isOddCpp(42L)
+```
+
+This is more computationally efficient and lets you use high-performance
+C++ libraries for specialized tasks.
+
+Note: Windows users will have to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
+
+## Rcpp
+
+C++ code also has access to R functions:
+
+```{r}
+evalCpp("Rcpp::rnorm(3)")
+```
+
+For more information, see the Rcpp documentation and [Eddelbuettel and Balamuta (2018)](https://doi.org/10.1080%2F00031305.2017.1375990).
 
 ## HPC
 
