@@ -14,9 +14,7 @@ library(dplyr)
 
 ## Performant R
 
-# Premature optimization is the root of all evil
-
-Seriously:
+# Don't Do It
 
 ## Premature optimization
 
@@ -35,12 +33,12 @@ knitr::include_graphics("images-performance/optimization_2x.png")
 
 https://xkcd.com/1691/
 
+# Know The Language
+
 ## Use R's vectorisation when possible
 
 Loops in R are not necessarily slow...but whenever possible,
 make use R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
-
-**Know your language.**
 
 ## Use R's vectorisation when possible
 
@@ -79,6 +77,35 @@ vectorised <- function(x) sum(log(x))
 x <- microbenchmark(loop(1:100), vectorised(1:100))
 print(x, signif = 3)
 ```
+
+## Use dedicated functions and packages
+
+Specialized functions such as `colSums`, `rowSums`, `colMeans`, and `rowMeans` 
+are _fast_.
+
+```{r, echo=TRUE}
+x <- cbind(x1 = rnorm(1e4), x2 = rnorm(1e4))
+
+mbm <- microbenchmark(rowSums(x), 
+                      x[,1] + x[,2],
+                      apply(x, 1, sum))
+print(mbm, signif = 3)
+```
+
+## Use the best tool
+
+Years ago a colleague and I wrote the [RCMIP5 package](https://cran.r-project.org/web/packages/RCMIP5/index.html) for
+handling and summarizing [CMIP5](https://pcmdi.llnl.gov/mips/cmip5/) data in R.
+
+**It was super slow.**
+
+Then we discovered fast, specialized tools such as [CDO](https://code.mpimet.mpg.de/projects/cdo), [Panoply](https://www.giss.nasa.gov/tools/panoply/), and 
+[NetCDF](https://docs.unidata.ucar.edu/netcdf-c/current/netcdf_working_with_netcdf_files.html).
+
+Don't reinvent the wheel; use the best (hopefully, 
+freely available and open source) tool for ths job.
+
+# Do Less
 
 ## Don't carry unnecessary data
 
@@ -127,53 +154,6 @@ print(x, signif = 3)
 ```
 
 (This difference will get worse with larger data frames!)
-
-## Understand memory allocation
-
-When we `rbind` (and similar operations), R computes how much memory is needed
-for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
-location, and frees the old objects. **This is expensive.**
-
-Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
-
-```{r rbind-in-loop, echo=TRUE}
-rbind_in_loop <- function() {
-    out <- data.frame()
-    for(i in 1:100) out <- rbind(out, iris)
-    out
-}
-```
-
-## Understand memory allocation
-
-When we `rbind` (and similar operations), R computes how much memory is needed
-for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
-location, and frees the old objects. **This is expensive.**
-
-Creating a list of the 100 data frames and then calling `rbind` once:
-
-```{r use-a-list, echo=TRUE}
-use_a_list <- function() {
-    out <- list()
-    for(i in 1:100) out[[i]] <- iris
-    do.call("rbind", out) # or dplyr::bind_rows()
-}
-```
-
-## Understand memory allocation
-
-When we `rbind` (and similar operations), R computes how much memory is needed
-for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
-location, and frees the old objects. **This is expensive.**
-
-Timing difference:
-
-```{r, warning=FALSE}
-x <- microbenchmark(rbind_in_loop(), use_a_list())
-print(x, signif = 3)
-```
-
-(This difference will get _much_ worse with larger data frames!)
 
 ## Don't do unnecessary things
 
@@ -249,9 +229,108 @@ print(h)
 That's changed! Behind the scenes R has replaced our function with a _compiled_
 version of it. **This compiled version is usually much faster.**
 
-R is very smart about when to compile functions, and you don't usually have
-to think about it. But it can mean that time-intensive functions run
-faster upon re-use.
+R is very smart about when to compile functions (technically, [closures](https://en.wikipedia.org/wiki/Closure_%28computer_programming%29)),
+and you don't usually have to think about it. 
+But it can mean that time-intensive functions run faster upon re-use.
+
+# Do Smarter
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
+
+```{r rbind-in-loop, echo=TRUE}
+rbind_in_loop <- function() {
+    out <- data.frame()
+    for(i in 1:100) out <- rbind(out, iris)
+    out
+}
+```
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a list of the 100 data frames and then calling `rbind` once:
+
+```{r use-a-list, echo=TRUE}
+use_a_list <- function() {
+    out <- list()
+    for(i in 1:100) out[[i]] <- iris
+    do.call("rbind", out) # or dplyr::bind_rows()
+}
+```
+
+## Understand memory allocation
+
+When we `rbind` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Timing difference:
+
+```{r, warning=FALSE}
+x <- microbenchmark(rbind_in_loop(), use_a_list())
+print(x, signif = 3)
+```
+
+(This difference will get _much_ worse with larger data frames!)
+
+## Think about your algorithms
+
+A clueless prime number algorithm:
+
+```{r, echo=TRUE}
+slow_prime <- function(n) {
+    if(n == 2) return(TRUE)
+    for(i in 2:(n-1)) {
+        if(n %% i == 0) return(FALSE)
+    }
+    return(TRUE)
+}
+
+slow_prime(7417)
+slow_prime(7418)
+```
+
+## Think about your algorithms
+
+A slightly less naive prime number algorithm:
+
+```{r, echo=TRUE}
+less_slow_prime <- function(n) {
+    if(n == 2) return(TRUE)
+    for(i in 2:sqrt(n)) {              # <----
+        if(n %% i == 0) return(FALSE)
+    }
+    return(TRUE)
+}
+
+less_slow_prime(7417)
+less_slow_prime(7418)
+```
+
+## Think about your algorithms
+
+Timing difference:
+
+```{r, warning=FALSE}
+n <- 7417
+x <- microbenchmark(slow_prime(n), less_slow_prime(n))
+print(x, signif = 3)
+```
+
+## The R Profiler
+
+R Profiler - TODO
+
+# Do With More
 
 ## Parallelize on your machine
 
@@ -295,11 +374,11 @@ Note that **there is a small computational cost to sending jobs to new cores**,
 so you may need to evaluate how 'big' (expensive) jobs are and how
 they should be split up.
 
-
-## The R Profiler
-
 ## Rcpp
+
+Rcpp - TODO
 
 ## HPC
 
+HPC - TODO
 
