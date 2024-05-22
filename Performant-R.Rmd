@@ -502,8 +502,19 @@ HPC - TODO
 
 # Conclusion
 
-## Evaluate 
+## Evaluate costs and benefits 
 
-TODO: graph showing work versus benefit
+```{r, fig.width=7, echo=FALSE}
+x <- read.csv("images-performance/difficulties.csv")
+ggplot(x, aes(Difficulty, Benefit, label = Thing)) + 
+    geom_text() +
+    theme_minimal() + 
+    theme(axis.text = element_blank(), 
+          axis.title = element_text(face = "bold", size = 16)) +
+    xlab("How much work it is to do") + 
+    ylab("How much benefit you might get") +
+    geom_hline(yintercept = 3.2, linewidth = 2, color = "grey") + 
+    geom_vline(xintercept = 3, linewidth = 2, color = "grey")
+```
 
-**Remember, premature optimization is the root of all evil.**
+**Remember, premature optimization is the root of all evil!**

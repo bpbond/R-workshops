@@ -1,0 +1,12 @@
+Thing,Difficulty,Benefit
+HPC,5,4
+parallel pkg,1.5,4.5
+Rcpp,4.5,3.75
+Profiler,3.5,3
+Algorithms,4,5
+Memory & copying,3.1,4.25
+JIT,1,2
+Prefilter,2,2.75
+Loop optimization,2.5,2.5
+rowSums etc.,1.2,4
+Vectorisation,2,3.5
