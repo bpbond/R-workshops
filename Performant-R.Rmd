@@ -498,7 +498,27 @@ For more information, see the Rcpp documentation and [Eddelbuettel and Balamuta 
 
 ## HPC
 
-HPC - TODO
+Cluster and high performance computing (HPC) resources provide maximal speedup
+for many kinds of jobs, but at a cost: getting access to those systems,
+learning about queue submission, paying for computational jobs,
+implementing post-processing, using MPI if needed, etc.
+
+There's a full example of using R on HPC at `/compass/fme200002/r_cluster_example/`:
+
+```
+. /etc/profile.d/modules.bash
+module purge
+module load r
+
+# Change directory into the example
+cd /compass/fme200002/r_cluster_example
+
+# R script to run 
+EXAMPLE_SCRIPT="/compass/fme200002/r_cluster_example/example.R"
+
+# run script with the slurm array index as the only argument to the script 
+Rscript $EXAMPLE_SCRIPT $SLURM_ARRAY_TASK_ID
+```
 
 # Conclusion
 
