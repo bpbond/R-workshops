@@ -19,7 +19,7 @@ Many books have been written about writing faster code in R and other languages.
 
 Our goal here is to cover what I view as the most common and useful tips
 and approaches for writing high-performing R code. These are laid out roughly
-in the order you should try them, i.e. increasing in complexity:
+in the order you should try them, roughly increasing in complexity:
 
 * Don't Do It
 * Know The Language
@@ -306,14 +306,57 @@ location, and frees the old objects. **This is expensive.**
 
 Timing difference:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 x <- microbenchmark(rbind_in_loop(), use_a_list())
 print(x, signif = 3)
 ```
 
 This difference will get _much_ worse with larger data frames!
 
-## Think about your algorithms
+## Understand what triggers a copy
+
+It's not always obvious what triggers an (expensive) object copy.
+
+```{r, eval=FALSE}
+df <- data.frame(x = 1:2, y = 3:4)
+
+library(lobstr)
+ref(df) # print location of each component of df
+```
+
+```{r, echo=FALSE}
+# Hidden code 
+df <- data.frame(x = 1:2, y = 3:4)
+library(lobstr)
+adr <- obj_addrs(df)
+ref(df)
+```
+
+We see that the two columns of `df` are stored at
+locations
+
+* `r adr[1]` (the `x` column), and
+* `r adr[2]` (the `y` column)
+
+## Understand what triggers a copy
+
+Adding a column does not trigger a copy, as R only has to create a vector
+for the new column:
+
+```{r}
+df$z <- "A"
+obj_addrs(df)
+```
+
+Adding a row, however, means that every column has to be copied to a new object
+(and so the memory addresses change). **This is slow.**
+
+```{r}
+df[3,] <- c(-1, -1, "B")
+obj_addrs(df)
+```
+
+## Understand your algorithms
 
 A clueless prime number algorithm:
 
@@ -330,7 +373,7 @@ slow_prime(7417)
 slow_prime(7418)
 ```
 
-## Think about your algorithms
+## Understand your algorithms
 
 A slightly less naive prime number algorithm:
 
@@ -347,7 +390,7 @@ less_slow_prime(7417)
 less_slow_prime(7418)
 ```
 
-## Think about your algorithms
+## Understand your algorithms
 
 Timing difference:
 
@@ -357,7 +400,7 @@ x <- microbenchmark(slow_prime(n), less_slow_prime(n))
 print(x, signif = 3)
 ```
 
-## The R Profiler
+## Understand the R Profiler
 
 R Profiler - TODO
 
@@ -374,7 +417,7 @@ local machine:
 ```{r}
 expensive_job <- function(x) Sys.sleep(2)
 
-# Normal approach using lapply()
+# Standard approach using lapply()
 serial_approach <- function() lapply(1:4, expensive_job)
 
 # Parallelized version using mclapply()
@@ -391,7 +434,7 @@ compute-bound, R's built-in `parallel` package can be a life-changer.
 
 Timing difference:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 x <- microbenchmark(serial_approach(), parallel_approach(), times = 1)
 print(x, signif = 3)
 ```
@@ -457,3 +500,10 @@ For more information, see the Rcpp documentation and [Eddelbuettel and Balamuta 
 
 HPC - TODO
 
+# Conclusion
+
+## Evaluate 
+
+TODO: graph showing work versus benefit
+
+**Remember, premature optimization is the root of all evil.**
