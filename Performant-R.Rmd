@@ -402,7 +402,50 @@ print(x, signif = 3)
 
 ## Understand the R Profiler
 
-R Profiler - TODO
+How do you _find_ the slow part of your code? 
+
+One option is to insert lots of timing statements...
+but the more powerful approach is `tools::Rprof`.
+
+Profiling works by frequently writing out the 
+[call stack](https://en.wikipedia.org/wiki/Call_stack) as code executes.
+
+```{r echo=TRUE}
+# Log profiling information to a tempfile
+Rprof(tmp <- tempfile())
+# Run the 100-copies-of-cars example from a few slides back
+x <- rbind_in_loop() # 
+# Stop profiling
+Rprof()
+```
+
+## Understand the R Profiler
+
+The profiling data makes it clear that almost all the time of `rbind_in_loop()`
+is spent in the `rbind()` call--that's the expensive step.
+
+```{r, eval=FALSE}
+summaryRprof(tmp)$by.total
+```
+
+```
+                  total.time total.pct self.time self.pct
+"rbind_in_loop"          0.12    100.00      0.00     0.00
+"rbind"                  0.12    100.00      0.00     0.00
+"[<-.factor"             0.08     66.67      0.08    66.67
+"[<-"                    0.08     66.67      0.00     0.00
+"as.vector"              0.02     16.67      0.02    16.67
+"vapply"                 0.02     16.67      0.02    16.67
+"as.vector.factor"       0.02     16.67      0.00     0.00
+```
+
+## Understand the R Profiler
+
+RStudio has built-in support for using and visualizing code profiling.
+
+```{r, out.width = "700px", echo=FALSE}
+knitr::include_graphics("images-performance/overview2.gif")
+```
 
 # Do With More
 
@@ -538,3 +581,8 @@ ggplot(x, aes(Difficulty, Benefit, label = Thing)) +
 ```
 
 **Remember, premature optimization is the root of all evil!**
+
+## Resources
+
+* [CRAN Task View: High-Performance and Parallel Computing with R](https://cran.r-project.org/web/views/HighPerformanceComputing.html)
+* [Profiling R code with the RStudio IDE](https://support.posit.co/hc/en-us/articles/218221837-Profiling-R-code-with-the-RStudio-IDE)
