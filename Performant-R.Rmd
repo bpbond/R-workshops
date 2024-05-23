@@ -48,11 +48,23 @@ https://xkcd.com/1691/
 
 ## Premature optimization
 
+Forget about small efficiencies!
+
 ```{r, out.width = "500px", echo=FALSE}
 knitr::include_graphics("images-performance/efficiency_2x.png")
 ```
 
 https://xkcd.com/1445/
+
+## There's no better optimization...
+
+...than **not running code at all**. Be aware of tools like [targets](https://github.com/ropensci/targets) for computationally demanding analysis projects.
+
+>"The package skips costly runtime for tasks that are already up to date, orchestrates the necessary computation with implicit parallel computing, and abstracts files as R objects."
+
+```{r, out.width = "200px", echo=FALSE}
+knitr::include_graphics("images-performance/logo.png")
+```
 
 # Know The Language
 
@@ -104,13 +116,17 @@ x <- microbenchmark(loop(1:100), vectorised(1:100))
 print(x, signif = 3)
 ```
 
-Throughout, we're using the [microbenchmark](https://cran.r-project.org/package=microbenchmark)
-package to quantify the speed of different approaches.
+(We're using the
+[microbenchmark](https://cran.r-project.org/package=microbenchmark)
+package to quantify the speed of different approaches.)
+
+**Note**: vectorisation is most efficient with single, long vectors.
+Think clearly about when your data needs to be grouped/nested data, and when it doesn't.
 
 ## Use dedicated functions and packages
 
-Specialized functions such as `colSums`, `rowSums`, `colMeans`, and `rowMeans` 
-are _fast_.
+Specialized functions such as `colSums()`, `rowSums()`, `colMeans()`, 
+and `rowMeans()` are _fast_.
 
 ```{r}
 # Create a large matrix and test different approaches
@@ -233,8 +249,8 @@ x <- microbenchmark(very_slow_average(1:100), slow_average(1:100), mean(1:100))
 print(x, signif = 3)
 ```
 
-Wait, **why isn't there a bigger difference** between `slow_average` and R's
-built-in `mean` function?!? 
+Wait, **why isn't there a bigger difference** between `slow_average()` and R's
+built-in `mean()`?!? 
 
 ## R's JIT compiler
 
@@ -268,11 +284,11 @@ But it can mean that time-intensive functions run faster upon re-use.
 
 ## Understand memory allocation
 
-When we `rbind` (and similar operations), R computes how much memory is needed
+When we `rbind()` (and similar operations), R computes how much memory is needed
 for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
 location, and frees the old objects. **This is expensive.**
 
-Creating a data frame with 100 copies of `cars`, calling `rbind` each time:
+Creating a data frame with 100 copies of `cars`, calling `rbind()` each time:
 
 ```{r rbind-in-loop}
 rbind_in_loop <- function() {
@@ -284,11 +300,11 @@ rbind_in_loop <- function() {
 
 ## Understand memory allocation
 
-When we `rbind` (and similar operations), R computes how much memory is needed
+When we `rbind()` (and similar operations), R computes how much memory is needed
 for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
 location, and frees the old objects. **This is expensive.**
 
-Creating a list of the 100 data frames and then calling `rbind` once:
+Creating a list of the 100 data frames and then calling `rbind()` once:
 
 ```{r use-a-list}
 use_a_list <- function() {
@@ -300,7 +316,7 @@ use_a_list <- function() {
 
 ## Understand memory allocation
 
-When we `rbind` (and similar operations), R computes how much memory is needed
+When we `rbind()` (and similar operations), R computes how much memory is needed
 for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
 location, and frees the old objects. **This is expensive.**
 
@@ -402,10 +418,10 @@ print(x, signif = 3)
 
 ## Understand the R Profiler
 
-How do you _find_ the slow part of your code? 
+Typically, 10% of code consumes 90% of the time. **How do you _find_ the slow part of your code?**
 
 One option is to insert lots of timing statements...
-but the more powerful approach is `tools::Rprof`.
+but the more powerful approach is `tools::Rprof()`.
 
 Profiling works by frequently writing out the 
 [call stack](https://en.wikipedia.org/wiki/Call_stack) as code executes.
@@ -487,9 +503,12 @@ print(x, signif = 3)
 For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
 compute-bound, R's built-in `parallel` package can be a life-changer.
 
-Note that **there is a small computational cost to sending jobs to new cores**,
-so you may need to evaluate how 'big' (expensive) jobs are and how
-they should be split up.
+Important caveats:
+
+* There can be many subtleties with running parallelized code
+* Things are harder on Windows
+* If your jobs take lots of memory, you will need to think carefully about how that will play out
+* There is a small computational cost to sending jobs to new cores, so evaluate how 'big' (expensive) jobs are and how they should be split up.
 
 ## Rcpp
 
@@ -542,9 +561,9 @@ For more information, see the Rcpp documentation and [Eddelbuettel and Balamuta 
 ## HPC
 
 Cluster and high performance computing (HPC) resources provide maximal speedup
-for many kinds of jobs, but at a cost: getting access to those systems,
-learning about queue submission, paying for computational jobs,
-implementing post-processing, using MPI if needed, etc.
+for many kinds of jobs, but **there can be lots of subtleties and pain points**:
+getting access, queue wait times, using MPI, handling networked filesystems,
+shared libraries, implementing post-processing, etc.
 
 There's a full example of using R on HPC at `/compass/fme200002/r_cluster_example/`:
 
