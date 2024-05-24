@@ -589,27 +589,21 @@ because it abstracts away *how* your data is stored.
 
 </div>
 
-## Verbs
-
-`dplyr` provides functions for each basic *verb* of data manipulation. 
-These tend to have analogues in base R, but the `dplyr` functions use a
-consistent syntax and are high performance.
-
-* `filter` - filter rows; like base R's `subset`
-* `arrange` - reorder rows; like `order`
-* `select` - select (or drop) columns
-* `mutate` - add new columns
-* `summarise` - like `aggregate`
-
 ## Grouping
 
-`dplyr` verbs become particularly powerful when used in conjunction 
+`dplyr` verbs (functions) become particularly powerful when used in conjunction 
 with *groups* we define in the dataset. Grouping doesn't change the data, 
 but instead _groups_ it in preparation for the next operation we perform.
 
 ```{r}
 gapminder %>%
   group_by(country)
+```
+
+In base R:
+
+```{r, eval=FALSE}
+split(gapminder, ~ pop + year) # but this creates a new object
 ```
 
 ## Summarising
@@ -624,7 +618,12 @@ gapminder %>%
   group_by(country) %>%
   summarise(maxpop = max(pop))
 
-# aggregate(. ~ country, data = gapminder, max)
+```
+
+In base R:
+
+```{r, eval=FALSE}
+aggregate(. ~ country, data = gapminder, max)
 ```
 
 ## Summarising and columns
@@ -699,6 +698,7 @@ min_max <- list(
 gapminder %>% 
     filter(continent %in% c("Africa", "Americas", "Asia")) %>% 
     group_by(continent) %>% 
+    # compute min and max for the numeric columns
     summarise(across(where(is.numeric), min_max)) %>% 
     pivot_longer(-continent) %>% 
     separate(name, into = c("variable", "stat")) %>%
@@ -811,11 +811,15 @@ ggplot(diamonds, aes(carat, price, color = cut)) +
 
 ## Model-fitting
 
+This old code now generates a warning. Leaving it here, in the slides,
+to make sure to mention `dplyr`'s penchant for changing (and breaking) behavior.
+
 ```{r}
 library(broom) # to sweep up -- tidy -- model outputs
 diamonds %>% 
     group_by(cut) %>% 
     do(mod = lm(log(price) ~ log(carat), data = .)) %>% 
+    # need to change this to `reframe` (no other change needed, thankfully)
     summarise(cut = cut,
               tidy(mod))
 ```
@@ -827,7 +831,11 @@ diamonds %>%
 - Lists
 - Handling dates and timestamps
 - Plotting (though we had many examples)
-- High performance computing
+- Efficient to high performance computing
+- Reproducible documents
+- Building your own package
+
+Check out slide decks at https://rpubs.com/bpbond
 
 But the tools we've covered here can do a lot!
 
@@ -840,7 +848,6 @@ But the tools we've covered here can do a lot!
 **Feedback welcome.**
 
 * <a href="mailto:bondlamberty@pnnl">bondlamberty@pnnl.gov</a>
-* [@BenBondLamberty](https://twitter.com/BenBondLamberty)
 * https://github.com/bpbond/R-workshops/issues
 
 The _slides_ for this presentation are available here: https://rpubs.com/bpbond/874167
