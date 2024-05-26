@@ -1,0 +1,607 @@
+---
+title: "Performant R Code"
+output: ioslides_presentation
+author: "Ben Bond-Lamberty"
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(microbenchmark)
+library(ggplot2)
+library(dplyr)
+```
+
+
+## Performant R Code
+
+Many books have been written about writing faster code in R and other languages.
+
+Our goal here is to cover what I view as the most common and useful tips
+and approaches for writing high-performing R code. These are laid out roughly
+in the order you should try them, roughly increasing in complexity:
+
+* Don't Do It
+* Know The Language
+* Do Less
+* Do Smarter
+* Do With More
+
+# Don't Do It
+
+## Premature optimization
+
+"Premature optimization is the root of all evil" is one of the most 
+[famous quotes](https://en.wikiquote.org/wiki/Donald_Knuth) in computer science.
+
+>_Premature optimization_ is a phrase used to describe a situation where a programmer lets performance considerations affect the design of a piece of code. This can result in a design that is not as clean as it could have been or code that is incorrect, because the **code is complicated** by the optimization and the **programmer is distracted** by optimizing.
+
+[Wikipedia](https://en.wikipedia.org/wiki/Program_optimization#When_to_optimize)
+
+## Premature optimization
+
+```{r, out.width = "300px", echo=FALSE}
+knitr::include_graphics("images-performance/optimization_2x.png")
+```
+
+https://xkcd.com/1691/
+
+## Premature optimization
+
+Forget about small efficiencies!
+
+```{r, out.width = "500px", echo=FALSE}
+knitr::include_graphics("images-performance/efficiency_2x.png")
+```
+
+https://xkcd.com/1445/
+
+## There's no better optimization...
+
+...than **not running code at all**. Be aware of tools like [targets](https://github.com/ropensci/targets) for computationally demanding analysis projects.
+
+>"The package skips costly runtime for tasks that are already up to date, orchestrates the necessary computation with implicit parallel computing, and abstracts files as R objects."
+
+```{r, out.width = "200px", echo=FALSE}
+knitr::include_graphics("images-performance/logo.png")
+```
+
+# Know The Language
+
+## Use R's vectorisation when possible
+
+Loops in R are not necessarily slow...but whenever possible,
+make use of R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
+
+```{r}
+a <- c(1, 1, 2, 3, 5, 8)
+a + 1
+```
+
+## Use R's vectorisation when possible
+
+Loops in R are not necessarily slow...but whenever possible,
+make use of R's built-in _vectorisation_ (ability to operate concurrently on all elements of a vector).
+
+```{r eval=FALSE}
+# Naive, non-vectorised approach
+lsum <- 0
+for(i in 1:length(x)) {
+    lsum <- lsum + log(x[i])
+}
+
+# The clearer, faster R approach
+lsum <- sum(log(x))
+```
+
+"This is speaking R with a C accent—a strong accent" [R Inferno](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf)
+
+## Use R's vectorisation when possible
+
+Timing difference:
+
+```{r, warning=FALSE, echo=FALSE}
+loop <- function(x) {
+    lsum <- 0
+    for(i in 1:length(x)) {
+        lsum <- lsum + log(x[i])
+    }
+    lsum
+}
+
+# The clearer, faster R approach
+vectorised <- function(x) sum(log(x))
+
+x <- microbenchmark(loop(1:100), vectorised(1:100))
+print(x, signif = 3)
+```
+
+(We're using the
+[microbenchmark](https://cran.r-project.org/package=microbenchmark)
+package to quantify the speed of different approaches.)
+
+**Note**: vectorisation is most efficient with single, long vectors.
+Think clearly about when your data needs to be grouped/nested data, and when it doesn't.
+
+## Use dedicated functions and packages
+
+Specialized functions such as `colSums()`, `rowSums()`, `colMeans()`, 
+and `rowMeans()` are _fast_.
+
+```{r}
+# Create a large matrix and test different approaches
+x <- cbind(x1 = rnorm(1e4), x2 = rnorm(1e4))
+
+mbm <- microbenchmark(rowSums(x), 
+                      x[,1] + x[,2],
+                      apply(x, 1, sum))
+print(mbm, signif = 3)
+```
+
+## Use the best tool
+
+Years ago a colleague and I wrote the [RCMIP5 package](https://cran.r-project.org/web/packages/RCMIP5/index.html) for
+handling and summarizing [CMIP5](https://pcmdi.llnl.gov/mips/cmip5/) data in R.
+
+**It was super slow.**
+
+Then we discovered fast, specialized tools such as [CDO](https://code.mpimet.mpg.de/projects/cdo), [Panoply](https://www.giss.nasa.gov/tools/panoply/), and 
+[NetCDF](https://docs.unidata.ucar.edu/netcdf-c/current/netcdf_working_with_netcdf_files.html).
+
+Don't reinvent the wheel; use the best (hopefully, 
+freely available and open source) tool for ths job.
+
+# Do Less
+
+## Don't carry unnecessary data
+
+Subset/filter data _before_ computing on it; otherwise, you're doing 
+unnecessary work.
+
+Here we compute the mean price by color for "Ideal" diamonds:
+
+```{r carry-data}
+library(ggplot2) # for 'diamonds'
+library(dplyr)
+postfilter <- function() {
+    diamonds %>% 
+        group_by(cut, color) %>% 
+        summarise(mean(price), .groups = "drop") %>%
+        filter(cut == "Ideal")
+}
+```
+
+## Don't carry unnecessary data
+
+Subset/filter data _before_ computing on it; otherwise, you're doing 
+unnecessary work.
+
+Same operation, but first we isolate just the data we're interested in:
+
+```{r pre-filter}
+prefilter <- function() {
+    diamonds %>% 
+        filter(cut == "Ideal") %>% 
+        group_by(color) %>% 
+        summarise(mean(price))
+}
+```
+
+## Don't carry unnecessary data
+
+Subset/filter data _before_ computing on it; otherwise, you're doing 
+unnecessary work.
+
+Timing difference:
+
+```{r, warning=FALSE, echo=FALSE}
+x <- microbenchmark(postfilter(), prefilter())
+print(x, signif = 3)
+```
+
+This difference will get worse with larger data frames; carrying less data
+will also reduce memory usage.
+
+## Don't do unnecessary things
+
+Move any unnecesssary computations _outside_ of loops or repeatedly-called
+functions.
+
+For example, here we repeatedly calculate `avg` inside the loop:
+
+```{r cruft-in-loop}
+very_slow_average <- function(x) {
+    sm <- 0
+    for(i in seq_along(x)) {
+        sm <- sm + x[i]
+        avg <- sm / i
+    }
+    avg
+}
+```
+
+## Don't do unnecessary things
+
+Move any unnecesssary computations _outside_ of loops or repeatedly-called
+functions.
+
+Here we calculate `avg` only once, after the loop is finished:
+
+```{r less-cruft-in-loop}
+slow_average <- function(x) {
+    sm <- 0
+    for(i in x) {
+        sm <- sm + i
+    }
+    sm / length(x)
+}
+```
+
+## Don't do unnecessary things
+
+Move any unnecesssary computations _outside_ of loops or repeatedly-called
+functions.
+
+Timing difference:
+
+```{r, warning=FALSE, echo=FALSE}
+x <- microbenchmark(very_slow_average(1:100), slow_average(1:100), mean(1:100))
+print(x, signif = 3)
+```
+
+Wait, **why isn't there a bigger difference** between `slow_average()` and R's
+built-in `mean()`?!? 
+
+## R's JIT compiler
+
+Most of ther `slow_average()` calls weren't so slow because of R's
+Just In Time (JIT) compiler.
+
+An (old) example from [Dirk Eddelbuettel](http://dirk.eddelbuettel.com/blog/2011/04/12/):
+
+```{r}
+h <- function(n, x=1) for (i in 1:n) x=(1+x)^(-1)
+print(h)
+```
+
+Printing `h` shows it to be a function, just as we expect.
+
+## R's JIT compiler
+
+```{r}
+h(1e6) # run h() with a large n
+print(h)
+```
+
+That's changed! Behind the scenes R has replaced our function with a _compiled_
+version of it. **This compiled version is usually much faster.**
+
+R is very smart about when to compile functions (technically, [closures](https://en.wikipedia.org/wiki/Closure_%28computer_programming%29)),
+and you don't usually have to think about it. 
+But it can mean that time-intensive functions run faster upon re-use.
+
+# Do Smarter
+
+## Understand memory allocation
+
+When we `rbind()` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a data frame with 100 copies of `cars`, calling `rbind()` each time:
+
+```{r rbind-in-loop}
+rbind_in_loop <- function() {
+    out <- data.frame()
+    for(i in 1:100) out <- rbind(out, iris)
+    out
+}
+```
+
+## Understand memory allocation
+
+When we `rbind()` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Creating a list of the 100 data frames and then calling `rbind()` once:
+
+```{r use-a-list}
+use_a_list <- function() {
+    out <- list()
+    for(i in 1:100) out[[i]] <- iris
+    do.call("rbind", out) # or dplyr::bind_rows()
+}
+```
+
+## Understand memory allocation
+
+When we `rbind()` (and similar operations), R computes how much memory is needed
+for the new object on [the heap](https://kagi.com/search?q=computer%20science%20heap), allocates that, copies everything to the new
+location, and frees the old objects. **This is expensive.**
+
+Timing difference:
+
+```{r, warning=FALSE, echo=FALSE}
+x <- microbenchmark(rbind_in_loop(), use_a_list())
+print(x, signif = 3)
+```
+
+This difference will get _much_ worse with larger data frames!
+
+## Understand what triggers a copy
+
+It's not always obvious what triggers an (expensive) object copy.
+
+```{r, eval=FALSE}
+df <- data.frame(x = 1:2, y = 3:4)
+
+library(lobstr)
+ref(df) # print location of each component of df
+```
+
+```{r, echo=FALSE}
+# Hidden code 
+df <- data.frame(x = 1:2, y = 3:4)
+library(lobstr)
+adr <- obj_addrs(df)
+ref(df)
+```
+
+We see that the two columns of `df` are stored at
+locations
+
+* `r adr[1]` (the `x` column), and
+* `r adr[2]` (the `y` column)
+
+## Understand what triggers a copy
+
+Adding a column does not trigger a copy, as R only has to create a vector
+for the new column:
+
+```{r}
+df$z <- "A"
+obj_addrs(df)
+```
+
+Adding a row, however, means that every column has to be copied to a new object
+(and so the memory addresses change). **This is slow.**
+
+```{r}
+df[3,] <- c(-1, -1, "B")
+obj_addrs(df)
+```
+
+## Understand your algorithms
+
+A clueless prime number algorithm:
+
+```{r}
+slow_prime <- function(n) {
+    if(n == 2) return(TRUE)
+    for(i in 2:(n-1)) {
+        if(n %% i == 0) return(FALSE)
+    }
+    return(TRUE)
+}
+
+slow_prime(7417)
+slow_prime(7418)
+```
+
+## Understand your algorithms
+
+A slightly less naive prime number algorithm:
+
+```{r}
+less_slow_prime <- function(n) {
+    if(n == 2) return(TRUE)
+    for(i in 2:sqrt(n)) {              # <----
+        if(n %% i == 0) return(FALSE)
+    }
+    return(TRUE)
+}
+
+less_slow_prime(7417)
+less_slow_prime(7418)
+```
+
+## Understand your algorithms
+
+Timing difference:
+
+```{r, warning=FALSE, echo=FALSE}
+n <- 7417
+x <- microbenchmark(slow_prime(n), less_slow_prime(n))
+print(x, signif = 3)
+```
+
+## Understand the R Profiler
+
+Typically, 10% of code consumes 90% of the time. **How do you _find_ the slow part of your code?**
+
+One option is to insert lots of timing statements...
+but the more powerful approach is `tools::Rprof()`.
+
+Profiling works by frequently writing out the 
+[call stack](https://en.wikipedia.org/wiki/Call_stack) as code executes.
+
+```{r echo=TRUE}
+# Log profiling information to a tempfile
+Rprof(tmp <- tempfile())
+# Run the 100-copies-of-cars example from a few slides back
+x <- rbind_in_loop() # 
+# Stop profiling
+Rprof()
+```
+
+## Understand the R Profiler
+
+The profiling data makes it clear that almost all the time of `rbind_in_loop()`
+is spent in the `rbind()` call--that's the expensive step.
+
+```{r, eval=FALSE}
+summaryRprof(tmp)$by.total
+```
+
+```
+                  total.time total.pct self.time self.pct
+"rbind_in_loop"          0.12    100.00      0.00     0.00
+"rbind"                  0.12    100.00      0.00     0.00
+"[<-.factor"             0.08     66.67      0.08    66.67
+"[<-"                    0.08     66.67      0.00     0.00
+"as.vector"              0.02     16.67      0.02    16.67
+"vapply"                 0.02     16.67      0.02    16.67
+"as.vector.factor"       0.02     16.67      0.00     0.00
+```
+
+## Understand the R Profiler
+
+RStudio has built-in support for using and visualizing code profiling.
+
+```{r, out.width = "700px", echo=FALSE}
+knitr::include_graphics("images-performance/overview2.gif")
+```
+
+# Do With More
+
+## Parallelize locally
+
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
+compute-bound, R's built-in `parallel` package can be a life-changer.
+
+Use `mclapply()` to split a job across the different _cores_ of your
+local machine:
+
+```{r}
+expensive_job <- function(x) Sys.sleep(2)
+
+# Standard approach using lapply()
+serial_approach <- function() lapply(1:4, expensive_job)
+
+# Parallelized version using mclapply()
+library(parallel)
+parallel_approach <- function() mclapply(1:4, 
+                                         expensive_job, 
+                                         mc.cores = 4)
+```
+
+## Parallelize locally
+
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
+compute-bound, R's built-in `parallel` package can be a life-changer.
+
+Timing difference:
+
+```{r, warning=FALSE, echo=FALSE}
+x <- microbenchmark(serial_approach(), parallel_approach(), times = 1)
+print(x, signif = 3)
+```
+
+## Parallelize locally
+
+For tasks that are [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel) and 
+compute-bound, R's built-in `parallel` package can be a life-changer.
+
+Important caveats:
+
+* There can be many subtleties with running parallelized code
+* Things are harder on Windows
+* If your jobs take lots of memory, you will need to think carefully about how that will play out
+* There is a small computational cost to sending jobs to new cores, so evaluate how 'big' (expensive) jobs are and how they should be split up.
+
+## Rcpp
+
+Thanks to the [Rcpp package](https://cran.r-project.org/web/packages/Rcpp/index.html)
+it's straightforward to link R and C++ code; as a compiled and low-level language,
+the latter will usually be significantly faster.
+
+Consider an R function to test whether a number is odd:
+
+```{r}
+isOddR <- function(num = 10L) { 
+    result <- (num %% 2L == 1L) 
+    return(result)
+}
+
+isOddR(42L)
+```
+
+## Rcpp
+
+We can write a C++ version of this function and call it from R:
+
+```{r}
+library(Rcpp)
+cppFunction("
+bool isOddCpp(int num = 10) {
+   bool result = (num % 2 == 1);
+   return result;
+}")
+
+isOddCpp
+isOddCpp(42L)
+```
+
+This is more computationally efficient and lets you use high-performance
+C++ libraries for specialized tasks.
+
+Note: Windows users will have to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
+
+## Rcpp
+
+C++ code also has access to R functions:
+
+```{r}
+evalCpp("Rcpp::rnorm(3)")
+```
+
+For more information, see the Rcpp documentation and [Eddelbuettel and Balamuta (2018)](https://doi.org/10.1080%2F00031305.2017.1375990).
+
+## HPC
+
+Cluster and high performance computing (HPC) resources provide maximal speedup
+for many kinds of jobs, but **there can be lots of subtleties and pain points**:
+getting access, queue wait times, using MPI, handling networked filesystems,
+shared libraries, implementing post-processing, etc.
+
+There's a full example of using R on HPC at `/compass/fme200002/r_cluster_example/`:
+
+```
+. /etc/profile.d/modules.bash
+module purge
+module load r
+
+# Change directory into the example
+cd /compass/fme200002/r_cluster_example
+
+# R script to run 
+EXAMPLE_SCRIPT="/compass/fme200002/r_cluster_example/example.R"
+
+# run script with the slurm array index as the only argument to the script 
+Rscript $EXAMPLE_SCRIPT $SLURM_ARRAY_TASK_ID
+```
+
+# Conclusion
+
+## Evaluate costs and benefits 
+
+```{r, fig.width=7, echo=FALSE}
+x <- read.csv("images-performance/difficulties.csv")
+ggplot(x, aes(Difficulty, Benefit, label = Thing)) + 
+    geom_text() +
+    theme_minimal() + 
+    theme(axis.text = element_blank(), 
+          axis.title = element_text(face = "bold", size = 16)) +
+    xlab("How much work it is to do") + 
+    ylab("How much benefit you might get") +
+    geom_hline(yintercept = 3.2, linewidth = 2, color = "grey") + 
+    geom_vline(xintercept = 3, linewidth = 2, color = "grey")
+```
+
+**Remember, premature optimization is the root of all evil!**
+
+## Resources
+
+* [CRAN Task View: High-Performance and Parallel Computing with R](https://cran.r-project.org/web/views/HighPerformanceComputing.html)
+* [Profiling R code with the RStudio IDE](https://support.posit.co/hc/en-us/articles/218221837-Profiling-R-code-with-the-RStudio-IDE)
