@@ -327,7 +327,7 @@ x <- microbenchmark(rbind_in_loop(), use_a_list())
 print(x, signif = 3)
 ```
 
-This difference will get _much_ worse with larger data frames!
+**So `use_a_list()` is ~10x faster...and it's _much_ more memory efficient.**
 
 ## Understand what triggers a copy
 
