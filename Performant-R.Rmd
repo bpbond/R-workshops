@@ -605,3 +605,5 @@ ggplot(x, aes(Difficulty, Benefit, label = Thing)) +
 
 * [CRAN Task View: High-Performance and Parallel Computing with R](https://cran.r-project.org/web/views/HighPerformanceComputing.html)
 * [Profiling R code with the RStudio IDE](https://support.posit.co/hc/en-us/articles/218221837-Profiling-R-code-with-the-RStudio-IDE)
+* The RMarkdown document for this presentation is [here](https://github.com/bpbond/R-workshops/blob/main/Performant-R.Rmd)
+
