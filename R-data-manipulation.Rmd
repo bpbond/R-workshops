@@ -1,5 +1,5 @@
 ---
-title: "Data manipulation and analysis using tidyverse R"
+title: "Reproducible data analysis using tidyverse R"
 author: "Ben Bond-Lamberty"
 date: "`r Sys.Date()`"
 output: slidy_presentation
@@ -20,7 +20,7 @@ theme_set(theme_bw())
 
 A short workshop covering reproducibility and code/data management; data filtering, reshaping, and joining; and summarizing.
 
-* Reproducible research and data management (~15 minutes)
+* Reproducible research and data management (~20 minutes)
 * Filtering and cleaning data (~30 minutes; the `gapminder` dataset)
 * Reshaping and joining data (~30 minutes)
 * Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
@@ -39,13 +39,14 @@ versions of the following packages are installed:
 - `ggplot2` - popular package for visualizing data
 - `gapminder` - life expectancy, GDP per capita, and population for 142 countries
 - `babynames` - names provided to the SSA 1880-2017
+- `broom` - handy tool for extracting model statistics
 
-## A note about 'tidyverse'
+## Important note about 'tidyverse'
 
 What we're working with today--the "tidyverse"--constitute a [particular and popular dialect of R](http://tidyverse.org),
 but the principles we'll go over are broadly applicable. 
 
-Like anything else, `dplyr` has advantages and disadvantages. In particular, **I do not recommend using it if you don't already have experience with base R**.
+Like anything else, the `dplyr` package has advantages and disadvantages. Which we will talk about. In particular, **I do not recommend using it if you don't already have experience with base R**.
 
 I will point out base R equivalents as we go.
 
@@ -59,11 +60,11 @@ stability, and zero dependencies.
 
 ## Reproducible research...
 
-We are in the era of collaborative 'big data', but even if you work by yourself
-with 'little data' you have to have some skills to deal with those data.
+We are in the era of collaborative 'big data.' But even if you work by yourself
+with 'little data,' you have to have skills to deal with those data.
 
 <div class='left' style='float:left;width:48%'>
-**Most fundamentally, your results have to be reproducible.**
+**Most fundamentally, your results have to be _transparent_ and _reproducible_.**
 
 >Your most important collaborator is your future self. It’s important to make a workflow that you can use time and time again, and even pass on to others in such a way that you don’t have to be there to walk them through it. [Source](http://berkeleysciencereview.com/reproducible-collaborative-data-science/)
 </div>
@@ -110,8 +111,9 @@ effective *data management* and *archiving*.
 
 ## Version control
 
-**Git** (and website [GitHub](https://github.com)) are the most popular version
-control tools for use with R, and many other languages. They offer:
+**Git** (in conjunction with websites such as [GitHub](https://github.com))
+is the most popular version control tool for use with R, and many 
+other languages. They offer:
 
 <div class='left' style='float:left;width:48%'>
 - Version control
@@ -134,9 +136,11 @@ managing code and data:
 * Tracking *changes over time*
 * Understanding and reproducing the *analytical steps*.
 
-**Ideally, _every_ step in your analysis is programmatic**. This means it is performed by a script that can be read and understood in the future.
+**Ideally, _every_ step in your analysis is programmatic.** This means it is performed by a script that can be read and understood in the future.
 
 Manual steps are hard to reproduce, laborious, and error-prone.
+
+**At a minimum, every step in your analysis is documented.** 
 
 ## Reproducibility is a process
 
@@ -161,10 +165,15 @@ A typical project/paper directory for me, slightly idealized:
 logs/
 output/
 rawdata/
+README.md
+LICENSE.md
 ```
 
-This directory contains *scripts* that are backed up both *locally* and *remotely*.
+This directory is **openly available**. 
+It contains *scripts* that are backed up both *locally* and *remotely*.
 It is under *version control*, so it's easy to track changes over time.
+README and LICENSE files inform users about the purpose and 
+conditions of this work.
 
 There's also [targets](https://docs.ropensci.org/targets/) and [make](https://en.wikipedia.org/wiki/Make_(software)), i.e. fully 
 automated analysis workflows...but that's a topic for another day.
@@ -255,6 +264,20 @@ gapminder %>%
   scale_x_log10()
 ```
 
+## Slicing data
+
+This lets you sample (akin to a smart filter) in very useful ways:
+
+```{r}
+gapminder %>% 
+    # base R: gapminder[sample(nrow(gapminder), size = 10),]
+    slice_sample(n = 10)
+gapminder %>%     
+    # we'll talk more about group_by later, but basically, "for each year"
+    group_by(year) %>% 
+    slice_max(order_by = gdpPercap, n = 2)
+```
+
 ## Select
 
 Also extremely useful. Note the different notations for selecting columns:
@@ -262,7 +285,6 @@ Also extremely useful. Note the different notations for selecting columns:
 ```{r, eval=FALSE}
 select(gapminder, pop, year)
 gapminder %>% select(pop, year)
-# Base R equivalent: gapminder[c("pop", "year")]
 gapminder %>% select(-lifeExp, -gdpPercap)
 gapminder %>% select(-1)
 ```
@@ -278,6 +300,7 @@ In base R:
 
 ```{r, eval=FALSE}
 gapminder[c("pop", "year"),]
+gapminder[grep("^c", colnames(gapminder))]
 ```
 
 ## <span style="color: red;">Exercise: filtering and selecting</span>
@@ -305,7 +328,7 @@ Egypt
 
 ## Uniting and separating
 
-These functions can be very useful.
+Handy, if not life-changing, functions.
 
 ```{r}
 library(tidyr)
@@ -331,9 +354,7 @@ Egypt %>%
 # colnames(gapminder)[colnames(gapminder) == "pop"] <- "population"
 ```
 
-## Mutating
-
-Several important notes:
+## More about mutating
 
 1. You can have multiple assignments within a single `mutate`; this is more efficient than separate `mutate` calls
 2. New variables overwrite existing variables of the same name
@@ -345,12 +366,10 @@ gapminder %>%
            pop_sd = sd(pop))
 ```
 
-4. Variables can be removed by setting their value to NULL
-5. There's also `transmute`, which adds new variables and drops existing ones
+3. As in base R, variables can be removed by setting their value to NULL
+4. There's also `transmute`, which adds new variables and drops existing ones
 
-## Mutating
-
-Several important notes:
+## More about mutating
 
 6. _Row-wise operations_ require special handling:
 
@@ -360,7 +379,7 @@ df %>% mutate(m = mean(c(x, y, z)))
 df %>% rowwise() %>% mutate(m = mean(c(x, y, z)))
 ```
 
-**Note** that for a large dataset, base R's `rowMeans` function will be _much_ 
+**Note** that base R's `rowMeans` function is _much_ 
 faster than this, however. Use the best tool for the job!
 
 ## Data cleaning
@@ -399,7 +418,7 @@ For this we use `tidyr::pivot_longer`, which at a minimum needs to know:
 what's the data source, and what column(s) do we want to pivot?
 
 ```{r}
-people %>% pivot_longer(c("age", "height"))
+people %>% pivot_longer(c(age, height))
 ```
 
 (Note base R has a `reshape` function, but I find it difficult to use.)
@@ -459,8 +478,7 @@ Egypt %>%
 ```{r}
 Egypt %>%
   pivot_longer(-year) %>%
-  ggplot(aes(year, value)) + geom_line() +
-   facet_wrap(~name, scales = "free")
+  ggplot(aes(year, value)) + geom_line() + facet_wrap(~name, scales = "free")
 ```
 
 Experiment. Why do these do what they do?
@@ -472,8 +490,8 @@ Egypt %>% pivot_longer(-lifeExp)
 
 ## <span style="color: red;">Exercise: reshaping</span>
 
-Our `Egypt` dataset has one row per year, and three data columns. Write code
-to transform it to have one row per datum, and each year in a
+Our `Egypt` dataset has one row per year, and three data columns. 
+Write code to transform it to have one row per datum, and each year in a
 different column. Do this for post-2000 data only.
 
 Hint: start by filtering and then pivoting it into _long_ form.
@@ -516,7 +534,7 @@ matches it finds from the _second_:
 people %>% left_join(hometowns)
 ```
 
-In other words, it's a _lookup_.
+In other words, it's a _lookup_. Base R uses `merge` or `match` for this.
 
 Note the message. **It's good practice to specify the common columns** 
 that joins should use:
@@ -536,7 +554,8 @@ hometowns %>% left_join(people, by = "who")
 
 ## Other joins
 
-There are many different join operations available.
+There are many different join operations available. I like the way that
+`dplyr` uses different function names for these:
 
 ```{r}
 people %>% right_join(hometowns, by = "who")
@@ -580,7 +599,7 @@ The `dplyr` package specializes in data frames, but also allows you
 to work with remote, out-of-memory databases, using exactly the same tools, 
 because it abstracts away *how* your data is stored.
 
-`dplyr` is very fast for most, though not all, operations on _data frames_ (tabular data). But again, like any tool, it has some disadvantages too.
+`dplyr` is very fast for most, though not all, operations on _data frames_ (tabular data) until things get very large; then check out `data.table`.
 </div>
 <div class='right' style='float:right;width:48%'>
 <img src="data-manipulation-images/dplyr_logo.png" width="300" />
@@ -651,6 +670,8 @@ gapminder %>%
   summarise(max_LifeExp = max(lifeExp))
 ```
 
+## Summarising and groups
+
 This makes it easy to do certain kinds of multi-step operations; for example,
 if we want to know what the _mean maximum country life expectancy_ is by continent:
 
@@ -661,7 +682,7 @@ gapminder %>%
   summarise(mean(max_LifeExp))
 ```
 
-You can also re-group as needed--See the `.groups` argument--or `ungroup`.
+You can also re-group or ungroup as needed; see the `.groups` argument.
 
 ## Operating on multiple columns and/or functions
 
@@ -723,8 +744,6 @@ babynames %>%
     group_by(year, sex) %>%
     slice_max(prop)
 ```
-
-The various `slice_` functions are quite handy.
 
 ## Summarizing babynames
 
@@ -811,8 +830,9 @@ ggplot(diamonds, aes(carat, price, color = cut)) +
 
 ## Model-fitting
 
-This old code now generates a warning. Leaving it here, in the slides,
-to make sure to mention `dplyr`'s penchant for changing (and breaking) behavior.
+This old code now generates a warning. I've left it here in the slides,
+to make sure to mention `dplyr`'s penchant for changing
+(and code-breaking) behavior.
 
 ```{r}
 library(broom) # to sweep up -- tidy -- model outputs
@@ -859,7 +879,7 @@ But the tools we've covered here can do a lot!
 * <a href="mailto:bondlamberty@pnnl">bondlamberty@pnnl.gov</a>
 * https://github.com/bpbond/R-workshops/issues
 
-The _slides_ for this presentation are available here: https://rpubs.com/bpbond/874167
+The _slides_ for this presentation are available here: https://rpubs.com/bpbond/1392825
 
 The _repository_ with the R code that generated the slides is here: https://github.com/bpbond/R-workshops/
 </div>
