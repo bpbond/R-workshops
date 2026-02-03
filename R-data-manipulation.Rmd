@@ -18,12 +18,16 @@ theme_set(theme_bw())
 
 ## The plan
 
-A short workshop covering reproducibility and code/data management; data filtering, reshaping, and joining; and summarizing.
+A short workshop covering reproducibility and code/data management; 
+data filtering, reshaping, and joining; and summarizing. 
 
 * Reproducible research and data management (~20 minutes)
 * Filtering and cleaning data (~30 minutes; the `gapminder` dataset)
 * Reshaping and joining data (~30 minutes)
 * Summarizing and manipulating data (~60 minutes; the `babynames` dataset)
+
+**The goal is to learn and practice tools that will 
+cover 90% of your data needs.**
 
 Slides: https://rpubs.com/bpbond/874167
 
@@ -874,12 +878,13 @@ diamonds %>%
 
 - Getting your data _into_ R
 - Working with non-text/tabular data
+- Spatial and raster data
 - Lists
 - Handling dates and timestamps
-- Plotting (though we had many examples)
+- Plotting (although we had many examples today)
 - Efficient to high performance computing
 - Reproducible documents
-- Building your own package
+- Building your own R package
 
 Check out slide decks at https://rpubs.com/bpbond
 
