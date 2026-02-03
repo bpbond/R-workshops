@@ -819,9 +819,18 @@ library(broom) # to sweep up -- tidy -- model outputs
 diamonds %>% 
     group_by(cut) %>% 
     do(mod = lm(log(price) ~ log(carat), data = .)) %>% 
-    # need to change this to `reframe` (no other change needed, thankfully)
-    summarise(cut = cut,
-              tidy(mod))
+    summarise(cut = cut, tidy(mod))
+```
+
+## Model-fitting
+
+New code using dplyr (1.1.0+)'s `reframe()`:
+
+```{r}
+library(broom) # to sweep up -- tidy -- model outputs
+diamonds %>% 
+    group_by(cut) %>% 
+    reframe(tidy(lm(log(price) ~ log(carat), data = .)))
 ```
 
 ## Important things we didn't talk about
