@@ -172,6 +172,7 @@ LICENSE.md
 This directory is **openly available**. 
 It contains *scripts* that are backed up both *locally* and *remotely*.
 It is under *version control*, so it's easy to track changes over time.
+
 README and LICENSE files inform users about the purpose and 
 conditions of this work.
 
@@ -227,7 +228,9 @@ some_data_frame %>%
 
   do_something_else() %>%
 
-  getting_dizzy_from_so_much_doing()
+  last_step() ->
+
+  result
 ```
 
 As noted above, **pipelines have tradeoffs** like any other tool.
