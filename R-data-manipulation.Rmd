@@ -29,7 +29,7 @@ data filtering, reshaping, and joining; and summarizing.
 **The goal is to learn and practice tools that will 
 cover 90% of your data needs.**
 
-Slides: https://rpubs.com/bpbond/874167
+Slides: https://rpubs.com/bpbond/1392825
 
 ## Requirements
 
@@ -418,9 +418,9 @@ Note that there is one column of _metadata_ (name) and two of _data_
 
 ## Make data longer
 
-Let's say we want to put `people` into long (or _tidy_) format--where every row
-is a different observation. In other words, we need to collapse multiple
-columns of data into a single one.
+Let's say we want to put `people` into long--or _tidy_--format, in which 
+every row is a different observation. (Wide-form data tend to be convenient 
+for _people_ to read, while long-form data are better for data processing.)
 
 For this we use `tidyr::pivot_longer`, which at a minimum needs to know: 
 what's the data source, and what column(s) do we want to pivot?
@@ -544,11 +544,11 @@ people %>% left_join(hometowns)
 
 In other words, it's a _lookup_. Base R uses `merge` or `match` for this.
 
-Note the message. **It's good practice to specify the common columns** 
-that joins should use:
+Note the message. It's good practice to specify the **common columns** and
+the **relationship** that joins should use:
 
 ```{r, eval=FALSE}
-people %>% left_join(hometowns, by = "who")
+people %>% left_join(hometowns, by = "who", relationship = "one-to-one")
 ```
 
 ## Left joins
@@ -852,7 +852,7 @@ Luckily, there's an easier way.
 
 ## Model-fitting
 
-This old code now generates a warning. I've left it here in the slides,
+This former code now generates a warning. I've left it here in the slides,
 to make sure to mention `dplyr`'s penchant for changing
 (and code-breaking) behavior.
 
@@ -882,7 +882,7 @@ diamonds %>%
 - Lists
 - Handling dates and timestamps
 - Plotting (although we had many examples today)
-- Efficient to high performance computing
+- Efficient and high performance computing
 - Reproducible documents
 - Building your own R package
 
