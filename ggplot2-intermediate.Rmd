@@ -10,7 +10,7 @@ output:
     code_folding: hide
 ---
 
-The introductory workshop material is here: [Part 1](https://rpubs.com/bpbond/727254), [Part 2](https://rpubs.com/bpbond/727256).
+The introductory workshop material is here: [Part 1](https://01a07dfd-909c-0907-c19a-9b9c40b594a3.share.connect.posit.cloud/), [Part 2](https://01a07dff-cf0e-0480-cf2d-375c5eb9fab3.share.connect.posit.cloud/).
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

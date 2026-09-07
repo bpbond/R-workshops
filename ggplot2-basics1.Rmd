@@ -10,11 +10,11 @@ output:
     code_folding: show
 ---
 
-Part 2 is [here](https://rpubs.com/bpbond/727256).
+Part 2 is [here](https://01a07dff-cf0e-0480-cf2d-375c5eb9fab3.share.connect.posit.cloud/).
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(emo)  # install via devtools::install_github("hadley/emo")
+library(emo)  # install via pak::pak("hadley/emo")
 ```
 
 # Topics
