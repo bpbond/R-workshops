@@ -373,9 +373,9 @@ library(dplyr)
 library(sparkline)
 library(reactable)
 
-data <- chickwts %>%
-  group_by(feed) %>%
-  summarise(weight = list(weight)) %>%
+data <- chickwts |>
+  group_by(feed) |>
+  summarise(weight = list(weight)) |>
   mutate(boxplot = NA, sparkline = NA)
 
 reactable(data, columns = list(
@@ -399,9 +399,9 @@ I really like the simplicty of the `leaflet` package.
 
 ```{r leaflet, out.width='100%'}
 library(leaflet)
-leaflet() %>% 
-  addTiles() %>%
-  setView(-76.9219, 38.9709, zoom = 17) %>%
+leaflet() |> 
+  addTiles() |>
+  setView(-76.9219, 38.9709, zoom = 17) |>
   addPopups(-76.9219, 38.9709,
             "Here is the <b>Joint Global Change Research Institute</b>")
 ```
@@ -508,7 +508,7 @@ Good resources:
 
 Thanks for attending this workshop on Advanced R Markdown! I hope it was useful.
 
-This presentation was made using R Markdown version `r packageVersion("rmarkdown")` running under `r R.version.string`. It is available at https://rpubs.com/bpbond/630335. The code is [here](https://github.com/JGCRI/Rworkshops/blob/master/Advanced_RMarkdown.Rmd).
+This presentation was made using R Markdown version `r packageVersion("rmarkdown")` running under `r R.version.string`. It is available at https://01a07df9-0412-58ef-9673-50056c255a32.share.connect.posit.cloud/. The code is [here](https://github.com/JGCRI/Rworkshops/blob/master/Advanced_RMarkdown.Rmd).
 
 ```{r sessionInfo}
 sessionInfo()
