@@ -138,7 +138,7 @@ mbm <- microbenchmark(rowSums(x),
 print(mbm, signif = 3)
 ```
 
-## Use the best tool
+## Use the best tool for the job
 
 Years ago a colleague and I wrote the [RCMIP5 package](https://cran.r-project.org/web/packages/RCMIP5/index.html) for
 handling and summarizing [CMIP5](https://pcmdi.llnl.gov/mips/cmip5/) data in R.
@@ -164,9 +164,9 @@ Here we compute the mean price by color for "Ideal" diamonds:
 library(ggplot2) # for 'diamonds'
 library(dplyr)
 postfilter <- function() {
-    diamonds %>% 
-        group_by(cut, color) %>% 
-        summarise(mean(price), .groups = "drop") %>%
+    diamonds |> 
+        group_by(cut, color) |> 
+        summarise(mean(price), .groups = "drop") |>
         filter(cut == "Ideal")
 }
 ```
@@ -180,9 +180,9 @@ Same operation, but first we isolate just the data we're interested in:
 
 ```{r pre-filter}
 prefilter <- function() {
-    diamonds %>% 
-        filter(cut == "Ideal") %>% 
-        group_by(color) %>% 
+    diamonds |> 
+        filter(cut == "Ideal") |> 
+        group_by(color) |> 
         summarise(mean(price))
 }
 ```
@@ -333,14 +333,14 @@ print(x, signif = 3)
 
 It's not always obvious what triggers an (expensive) object copy.
 
-```{r, eval=FALSE}
+```{r eval=FALSE}
 df <- data.frame(x = 1:2, y = 3:4)
 
 library(lobstr)
 ref(df) # print location of each component of df
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Hidden code 
 df <- data.frame(x = 1:2, y = 3:4)
 library(lobstr)
@@ -408,11 +408,22 @@ less_slow_prime(7418)
 
 ## Understand your algorithms
 
+But remember, **use the best tool for the job.**
+
+```{r}
+# "primes: Fast Functions for Prime Numbers"
+# https://cran.r-project.org/package=primes
+library(primes)
+is_prime(7417)
+```
+
+## Understand your algorithms
+
 Timing difference:
 
 ```{r, warning=FALSE, echo=FALSE}
 n <- 7417
-x <- microbenchmark(slow_prime(n), less_slow_prime(n))
+x <- microbenchmark(slow_prime(n), less_slow_prime(n), is_prime(n))
 print(x, signif = 3)
 ```
 
@@ -605,5 +616,5 @@ ggplot(x, aes(Difficulty, Benefit, label = Thing)) +
 
 * [CRAN Task View: High-Performance and Parallel Computing with R](https://cran.r-project.org/web/views/HighPerformanceComputing.html)
 * [Profiling R code with the RStudio IDE](https://support.posit.co/hc/en-us/articles/218221837-Profiling-R-code-with-the-RStudio-IDE)
-* The RMarkdown document for this presentation is [here](https://github.com/bpbond/R-workshops/blob/main/Performant-R.Rmd)
+* The RMarkdown document with all code for this presentation is [here](https://github.com/bpbond/R-workshops/blob/main/Performant-R.Rmd)
 

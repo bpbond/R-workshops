@@ -55,3 +55,4 @@ rsconnect/
 # OS files
 .DS_Store
 .positai
+Rprof.out
