@@ -233,8 +233,8 @@ Say we have a figure we want to include:
 ```{r gapminder-chunk, echo=TRUE, eval=FALSE}
 library(gapminder)
 
-p <- gapminder %>%
-  filter(year == 1977) %>%
+p <- gapminder |>
+  filter(year == 1977) |>
   ggplot(aes(gdpPercap, lifeExp, size = pop, color = continent)) +
   geom_point() +
   scale_x_log10() +
@@ -249,8 +249,8 @@ print(p)
 ```{r gapminder-graph, echo=FALSE}
 library(gapminder)
 
-p <- gapminder %>%
-  filter(year == 1977) %>%
+p <- gapminder |>
+  filter(year == 1977) |>
   ggplot(aes(gdpPercap, lifeExp, size = pop, color = continent)) +
   geom_point() +
   scale_x_log10()
@@ -314,8 +314,8 @@ This has been the tip of the iceberg.
 ```{r plotly, message=FALSE}
 library(plotly)
 
-p <- gapminder %>%
-  filter(year == 1977) %>%
+p <- gapminder |>
+  filter(year == 1977) |>
   ggplot(aes(gdpPercap, lifeExp, size = pop, color = continent)) +
   geom_point() +
   scale_x_log10() +
@@ -331,7 +331,7 @@ ggplotly(p)
 ```{r DT, message=FALSE}
 library(DT)
 datatable(gapminder, rownames = FALSE, filter = "top", 
-          options = list(pageLength = 5, scrollX = TRUE)) %>% 
+          options = list(pageLength = 5, scrollX = TRUE)) |> 
   formatStyle(columns = 1:6, fontSize = "50%")
 ```
 
@@ -343,9 +343,9 @@ This takes _~~one~~ two_ lines of code in RMarkdown. Example based on [this post
 
 ```{r leaflet, out.width='100%', echo=FALSE}
 library(leaflet)
-leaflet() %>% 
-  addTiles() %>%
-  setView(-76.9219, 38.9709, zoom = 17) %>%
+leaflet() |> 
+  addTiles() |>
+  setView(-76.9219, 38.9709, zoom = 17) |>
   addPopups(-76.9219, 38.9709,
             "Here is the <b>Joint Global Change Research Institute</b>")
 ```
@@ -385,6 +385,6 @@ Thanks for attending this introduction to R Markdown documents workshop! We hope
 
 This presentation was made using R Markdown version `r packageVersion("rmarkdown")` running under `r R.version.string`.
 
-These slides are available at https://rpubs.com/bpbond/1444572.
+These slides are available at https://01a07dbf-206a-a5da-4c23-caed773c901b.share.connect.posit.cloud/.
 
 They were written in R Markdown! The code is [here](https://github.com/bpbond/R-workshops/blob/main/Introduction_to_RMarkdown.Rmd).
